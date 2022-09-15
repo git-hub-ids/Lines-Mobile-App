@@ -1,0 +1,97 @@
+import * as general from "services/general";
+
+export async function getOrders(locationId, stepId, status, skip = 0, take = 0, orderBy = 0) {
+    var path = `${general.servicesUrl.getOrders}?locationId=${locationId}&stepId=${stepId}&status=${status}&skip=${skip}&take=${take}&OrderBy=${orderBy}`;
+    return await general.get(path, true).then(response => { return response; });
+}
+
+export async function searchOrders(locationId, stepId, searchText) {
+    var path = `${general.servicesUrl.getOrders}?locationId=${locationId}&stepId=${stepId}&search=${searchText}`;
+    return await general.get(path, true).then(response => { return response; });
+}
+
+export async function getOrderDetails(item, checkType) {
+    var path = `${general.servicesUrl.getOrderDetails}?checkType=${checkType}`;
+    return await general.post(path, item, true).then(response => { return response.map(function (item) { item.expiryDate = formatDate(item.expiryDate); return item; }) });
+}
+
+export async function saveOrder(data) {
+    return await general.post(general.servicesUrl.saveOrder, data, true).then(response => { return response; });
+}
+
+export async function saveCharges(data) {
+    return await general.post(general.servicesUrl.saveCharges, data, true).then(response => { return response; });
+}
+
+export async function getItems(skip, take, text = "") {
+    let search = "";
+    if (text !== "")
+        search = `&search=${text}`;
+    var path = `${general.servicesUrl.getItems}Skip/${skip}/Take/${take}?OnlyItem=1&invoiceKind=70&currencyId=1${search}`;
+    let response = await general.get(path, true).then(response => { return response; });
+    return formatItems(response);
+}
+
+export async function getUnits(itemId) {
+    var path = `${general.servicesUrl.getUnits}${itemId}?invoiceKind=70&currencyId=1`;
+    let response = await general.get(path, true).then(response => { return response; });
+    return formatUnits(response);
+}
+
+export async function getWarehouses() {
+    let warehouses = global.warehouses;
+    if (!warehouses || warehouses.length == 0) {
+        let response = await general.get(general.servicesUrl.getWarehouses, true).then(response => { return response; });
+        warehouses = formatWarehouses(response);
+        global['warehouses'];
+    }
+    return warehouses;
+}
+
+function formatDate(date) {
+    if (date === "1900-01-01T00:00:00" || date === "0001-01-01T00:00:00")
+        return null;
+    return date;
+}
+
+function formatItems(response) {
+    let items = [];
+    if (response) {
+        items = response.map((item) => {
+            item.value = item.id;
+            item.label = item.name;
+            item.units = formatUnits(item);
+            return item;
+        }
+        )
+    }
+    return items;
+}
+
+function formatUnits(response) {
+    let units = [];
+    if (response && response.units && response.units.length > 0) {
+        units = response.units.map((unit) => ({
+            id: unit.unitId,
+            value: unit.unitId,
+            label: unit.unitName
+        })
+        )
+    }
+    return units;
+}
+
+function formatWarehouses(response) {
+    let warhouses = [];
+    if (response && response.length > 0) {
+        warhouses = response.map((warehouse) => ({
+            id: warehouse.id,
+            value: warehouse.id,
+            label: warehouse.name
+        })
+        )
+    }
+    return warhouses;
+}
+
+

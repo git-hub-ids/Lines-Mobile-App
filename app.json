@@ -1,0 +1,32 @@
+{
+  "name": "lines",
+  "displayName": "lines",
+  "expo": {
+    "name": "lines",
+    "slug": "lines",
+    "version": "1.0.0",
+    "splash": {
+      "image": "./assets/images/splash-screen.png",
+      "resizeMode": "cover"
+    },
+    "icon": "./assets/images/icon.png",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.ids.lines",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#007C70"
+      },
+      "googleServicesFile": "./google-services.json"
+    },
+    "ios": {
+      "googleServicesFile": "./GoogleService-Info.plist"
+    },
+    "plugins": [
+      "@react-native-firebase/app",
+      "@react-native-firebase/crashlytics"
+    ]
+  }
+}
