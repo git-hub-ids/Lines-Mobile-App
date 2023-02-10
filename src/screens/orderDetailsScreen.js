@@ -5,7 +5,7 @@ import { Screen, Button } from "components/common";
 import { RawItemDetails, AddItemModal } from "components/orders";
 import * as services from "services/orders";
 import { translate, removeTime } from "helpers/utils";
-import { CheckType } from "../types/enums";
+import { CheckType, ActionType } from "../types/enums";
 import R from 'res/R';
 
 export default class OrderDetailsScreen extends React.Component {
@@ -78,7 +78,7 @@ export default class OrderDetailsScreen extends React.Component {
                 if (selectedOrders && selectedOrders.length > 0 && details && details.length > 0) {
                     details = details.map((d) => { d.expiryDate ? d.expiryDate = removeTime(d.expiryDate) : null; return d })
                     let order = this.state.selectedOrders[0];
-                    var data = { actionId: order.actionID, checkType: this.state.actionId == 26 ? CheckType.Checkout : CheckType.Checkin };
+                    var data = { actionId: order.actionID, checkType: this.state.actionId == ActionType.Transfer ? CheckType.Checkout : CheckType.Checkin };
                     data.flowDataDetailTable = selectedOrders;
                     data.flowDataProdutionItems = details;
                     var response = await services.saveOrder(data);
@@ -103,7 +103,7 @@ export default class OrderDetailsScreen extends React.Component {
         return (
             <View style={styles.footer}>
                 <Button style={styles.btnFooter}
-                    text={this.state.actionId == 26 ? translate('transfer') : translate('start')}
+                    text={this.state.actionId == ActionType.Transfer ? translate('transfer') : translate('start')}
                     onPress={this.start} />
             </View>
         )

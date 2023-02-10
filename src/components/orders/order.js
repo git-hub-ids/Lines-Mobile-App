@@ -3,7 +3,7 @@ import { StyleSheet, View, Text } from "react-native";
 import { CheckBox } from 'react-native-elements';
 import * as services from "services/orders";
 import { Button } from "components/common";
-import { AddChargeModal } from "components/orders";
+import { AddChargeModal } from "components/charges";
 import { translate } from "helpers/utils";
 import { OrderStatus } from "../../types/enums";
 import moment from "moment";

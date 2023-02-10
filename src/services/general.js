@@ -4,7 +4,7 @@ import * as storage from "helpers/storage";
 
 export const servicesUrl = {
     /* GET */
-    getLocation: '/LookUp/Location',
+    getProductionCenters: '/LookUp/ProductionCenter',
     getCharges: '/LookUp/Charges',
     getSteps: '/WorkFlow/Step',
     getOrders: '/WorkFlow/FlowData',

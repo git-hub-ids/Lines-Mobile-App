@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, View, Text } from "react-native";
 import { Button } from "components/common";
-import AddChargeModal  from "./addChargeModal"
+import { AddChargeModal }  from "components/charges"
 import { translate } from "helpers/utils";
 import { OrderStatus, CheckType } from "../../types/enums";
 import * as services from "services/orders";

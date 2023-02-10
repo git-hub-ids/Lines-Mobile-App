@@ -4,12 +4,12 @@ import {getUniqueId} from "helpers/utils";
 
 export async function getLocations() {
     var deviceId = getUniqueId();
-    var path = `${general.servicesUrl.getLocation}?location=${deviceId}`;
+    var path = `${general.servicesUrl.getProductionCenters}?ProductionCenterId=${deviceId}`;
     return await general.get(path, true).then(response => { return response; });
 }
 
 export async function getSteps(locationId) {
-    var path = `${general.servicesUrl.getSteps}?locationId=${locationId}`;
+    var path = `${general.servicesUrl.getSteps}?ProductionCenterId=${locationId}`;
     return await general.get(path, true).then(response => { return response; });
 }
 

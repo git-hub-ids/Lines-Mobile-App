@@ -1,7 +1,7 @@
 import { I18nManager } from "react-native";
 import i18n from 'i18n-js';
 import memoize from 'lodash.memoize'; // Use for caching/memoize for better performance
-//import DeviceInfo from 'react-native-device-info';
+// import DeviceInfo from 'react-native-device-info';
 import moment from "moment";
 
 const translate = memoize(
@@ -34,8 +34,8 @@ const setI18nConfig = async (lang, isRTL) => {
 
 const getUniqueId = () => {
   try {
-    let uniqueId = "" //DeviceInfo.getUniqueId() // "b0db9878d0fbd76a"//DeviceInfo.getUniqueId();
-    return uniqueId;
+    // let uniqueId = DeviceInfo.getUniqueId() // "b0db9878d0fbd76a"//DeviceInfo.getUniqueId();
+    // return uniqueId;
     return '1dc9d263fe5762eb';
   } catch (error) {
     global.toast.show(translate('msgErrorOccurred'), { type: "danger" });

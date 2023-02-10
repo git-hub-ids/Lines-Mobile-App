@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, TextInput, View, TouchableOpacity } from "react-native";
 import { Header, Screen } from "components/common";
-import Tabs from "components/orders/tabs";
+import { Tabs } from "components/tabs";
 import Icon from 'react-native-vector-icons/Ionicons';
 import { translate } from "helpers/utils";
 import R from 'res/R';
