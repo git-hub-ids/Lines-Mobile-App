@@ -19,7 +19,13 @@ export default class Order extends React.Component {
             showModal: false,
         };
     }
-
+    // addLineBreaks = (str, n) =>{
+    //     const chunks = [];
+    //     for (let i = 0; i < str.length; i += n) {
+    //       chunks.push(str.substring(i, i + n));
+    //     }
+    //     return chunks.join("\n");
+    //   }
     // in case ready or progress tab
     onCheck = () => {
         this.props.item.checked = !this.props.item.checked;
@@ -50,7 +56,22 @@ export default class Order extends React.Component {
         return (
             <View style={styles.container}>
                 <View style={styles.details} >
-                    <View >
+                    <View>
+                        <View 
+                        style={{ marginLeft:-20}}
+                        >
+                            {this.props.status !== OrderStatus.Completed ?
+                                <CheckBox
+                                    uncheckedColor={R.colors.darkGreen}
+                                    checked={item.checked ? item.checked : false}
+                                    checkedColor={R.colors.darkGreen}
+                                    onPress={this.onCheck}
+                                    size={35}
+                                    checkedIcon="check-square"
+                                />
+                                : null
+                            }
+                        </View>
                         <View style={styles.group}>
                             <Text style={styles.title}>
                                 {translate('workflowName')}:
@@ -100,17 +121,19 @@ export default class Order extends React.Component {
                             </Text>
                         </View>
                     </View>
-                    {this.props.status !== OrderStatus.Completed ?
-                        <CheckBox
-                            uncheckedColor={R.colors.darkGreen}
-                            checked={item.checked ? item.checked : false}
-                            checkedColor={R.colors.darkGreen}
-                            onPress={this.onCheck}
-                            size={35}
-                            checkedIcon="check-square"
-                        />
+                    {/* {this.props.status !== OrderStatus.Completed ?
+                        <View>
+                            <CheckBox
+                                uncheckedColor={R.colors.darkGreen}
+                                checked={item.checked ? item.checked : false}
+                                checkedColor={R.colors.darkGreen}
+                                onPress={this.onCheck}
+                                size={35}
+                                checkedIcon="check-square"
+                            />
+                        </View>
                         : null
-                    }
+                    } */}
                     {   /* charges field */
                         this.props.status == OrderStatus.Completed && item?.actionID == 28 ?
                             <View style={styles.charges}>
@@ -161,6 +184,9 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     group: {
+        display: 'flex',
+        flexWrap: "wrap",
+        alignItems: "baseline",
         flexDirection: 'row'
     },
     title: {
@@ -169,6 +195,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold'
     },
     info: {
+
         paddingStart: 10,
         color: R.colors.darkGreen,
         fontSize: 20,

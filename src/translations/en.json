@@ -51,6 +51,7 @@
     "selectUnit": "Select a unit",
     "selectWhouse": "Select a warehouse",
     "selectLotNumber": "Select a lot number",
+    "selectExpiry": "Select Expiry",
     "search" : "Search",
     "searchBy": "Search by",
     "msgSearch": "Search by order number or client name",
@@ -70,5 +71,6 @@
     "msgInvalidDate": "Invalid date",
     "msgCantSelectOrder": "Select orders with the same kind",
     "msgCantSelectMultiOrders": "You can't select a multiple orders",
-    "msgConnectionError": "Connection error, please check your API"
+    "msgConnectionError": "Connection error, please check your API",
+    "msgUnitRequired": "Unit is required"
 }

@@ -51,6 +51,7 @@
     "selectUnit": "إختر وحدة القياس",
     "selectWhouse": "إختر المخزن",
     "selectLotNumber": "إختر رقم الطبخة",
+    "selectExpiry": "إختر انتهاء الصلاحية",  
     "search" : "بحث",
     "searchBy": "بحث عن",
     "msgSearch": "بحث عن رقم الطلب او اسم الزبون",
@@ -69,6 +70,7 @@
     "msgInvalidDate": "تاريخ غير صالح",
     "msgCantSelectOrder": "You can't select a different order type",
     "msgCantSelectMultiOrders": "You can't select a multiple orders",
-    "msgConnectionError": "Connection error, please check your API"
+    "msgConnectionError": "Connection error, please check your API",
+    "msgUnitRequired": "يرجى إختيار وحدة"
 
 }

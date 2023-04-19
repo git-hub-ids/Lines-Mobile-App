@@ -1,5 +1,4 @@
 import * as general from "services/general";
-
 export async function getOrders(
   locationId,
   stepId,
@@ -49,6 +48,7 @@ export async function saveCharges(data) {
 
 export async function getItem(id) {
   var path = general.servicesUrl.getItems + id;
+  console.log(path)
   let response = await general.get(path, true).then((response) => {
     return response;
   });
@@ -73,11 +73,35 @@ export async function getUnits(itemId) {
   return formatUnits(response);
 }
 
-export async function getWarehouses() {
+// export async function getWarehouses() {
+//   let warehouses = global.warehouses;
+//   if (!warehouses || warehouses.length == 0) {
+//     let response = await general
+//       .get(general.servicesUrl.getWarehouses, true)
+//       .then((response) => {
+//         return response;
+//       });
+//     warehouses = formatWarehouses(response);
+//     global["warehouses"];
+//   }
+//   return warehouses;
+// }
+export async function getIntermediateWarehouse() {
+  let response = await general
+    .get(general.servicesUrl.getIntermediateWarehouse, true)
+    .then((response) => {
+      return response;
+    });
+  global["IntermediateWarehouse"] = response[0].value;
+  return response[0].value;
+}
+export async function getWarehouses(withoutIntermediate = false) {
   let warehouses = global.warehouses;
+
   if (!warehouses || warehouses.length == 0) {
+    var path = `${general.servicesUrl.getWarehouses}?ProductionCenterID=${global.LocationId}&withoutIntermediate=${withoutIntermediate}`;
     let response = await general
-      .get(general.servicesUrl.getWarehouses, true)
+      .get(path, true)
       .then((response) => {
         return response;
       });
@@ -85,6 +109,23 @@ export async function getWarehouses() {
     global["warehouses"];
   }
   return warehouses;
+}
+
+export async function getAvailableQty(itemId, whouseId, spec = '', expiry = '') {
+  if (global.LocationId == null)
+    global.LocationId = 0;
+  var path = `${general.servicesUrl.getAvailableQty}${itemId}?whouseId=${whouseId}`;
+  if (spec != '')
+    path = path + `&spec=${spec}`
+  if (expiry != '')
+    path = path + `&expiryDate=${expiry}`
+  console.log(path)
+  let response = await general
+    .get(path, true)
+    .then((response) => {
+      return response;
+    });
+  return response[0].onHand;
 }
 
 function formatDate(date) {

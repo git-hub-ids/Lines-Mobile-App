@@ -27,12 +27,15 @@ export default class StepsScreen extends React.Component {
             var locationId = this.props?.route?.params?.locationId;
             // in case there is a single location
             // the params are null
+
             if (!locationId) {
                 locationId = global.locations[0].id;
                 this.props.navigation.setOptions({
                     headerLeft: () => null
                 });
             }
+            global["LocationId"] = locationId;
+            global["StepLocationId"] = locationId;
             var steps = await services.getSteps(locationId);
             sections = [{
                 id: 0,

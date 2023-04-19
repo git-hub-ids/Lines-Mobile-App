@@ -29,6 +29,8 @@ export const AuthProvider = props => {
         if (locations && locations.length > 0) {
           global['locations'] = locations;
           if (locations.length == 1) {
+            global["LocationId"] = locations[0].id;
+            global["StepLocationId"] = locations[0].id;
             var steps = await lookups.getSteps(locations[0].id);
             if (steps && steps.length == 1)
               global['steps'] = steps;

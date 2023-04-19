@@ -1,10 +1,11 @@
 import React from "react";
-import { StyleSheet, FlatList, View, ActivityIndicator, TouchableOpacity } from "react-native";
+import { StyleSheet, FlatList, View, Text, ActivityIndicator, TouchableOpacity } from "react-native";
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Screen, Button } from "components/common";
 import { RawItemDetails, AddItemModal } from "components/orders";
 import * as services from "services/orders";
 import { translate, removeTime } from "helpers/utils";
+import moment from "moment";
 import { CheckType, ActionType } from "../types/enums";
 import R from 'res/R';
 
@@ -29,7 +30,7 @@ export default class OrderDetailsScreen extends React.Component {
         if (selectedOrders && selectedOrders.length > 0) {
             let order = selectedOrders[0];
             this.props.navigation.setOptions({
-                title: order.itemName,
+                title: '',
                 headerStyle: { backgroundColor: R.colors.lightGrey },
                 headerTintColor: R.colors.darkGreen,
                 headerRight: () => (
@@ -45,6 +46,7 @@ export default class OrderDetailsScreen extends React.Component {
                 var response = await services.getOrderDetails(selectedOrders, CheckType.Checkin);
                 if (response) {
                     details = response;
+                    details = details.map((d) => { d.expiryDate ? d.expiryDate = moment(d.expiryDate, "YYYY-MM-DD HH:mm:ss").format("DD/MM/YYYY") : null; return d })
                 }
             }
             catch (error) {
@@ -77,6 +79,28 @@ export default class OrderDetailsScreen extends React.Component {
                 let details = this.state.details;
                 if (selectedOrders && selectedOrders.length > 0 && details && details.length > 0) {
                     details = details.map((d) => { d.expiryDate ? d.expiryDate = removeTime(d.expiryDate) : null; return d })
+                    let warehouses = await services.getWarehouses(this.props.FromTab === 0 || this.props.FromTab === 7);
+
+                    let res = await Promise.all(details.map(async (d) => {
+                        let item = await services.getItem(d.itemId);
+                        const isExpiryDateRequired = item.isExpiry;
+                        if (isExpiryDateRequired == 1 && d.expiryDate == null) {
+                            return d;
+                        }
+                    }));
+                    if (res[0] != undefined) {
+                        this.setState({ isSending: false });
+                        return;
+                    }
+                    let whouses = details.map((d) => {
+                        let selectedWhouse = warehouses.find((w) => w.id == d.fromWhouseId);
+                        if (selectedWhouse == undefined || selectedWhouse == null || d.qty == 0) { this.setState({ isSending: false }); return d; }
+                    });
+                    if (whouses != null && whouses[0] != undefined) {
+                        this.setState({ isSending: false });
+                        return;
+                    }
+                    if (global.QtyError == true) { this.setState({ isSending: false }); return; }
                     let order = this.state.selectedOrders[0];
                     var data = { actionId: order.actionID, checkType: this.state.actionId == ActionType.Transfer ? CheckType.Checkout : CheckType.Checkin };
                     data.flowDataDetailTable = selectedOrders;
@@ -110,26 +134,45 @@ export default class OrderDetailsScreen extends React.Component {
     }
 
     render() {
+        const selectedOrders = this.state.selectedOrders;
+        let order = null
+        if (selectedOrders) {
+            order = selectedOrders[0]
+        }
         return (
             <Screen>
                 {this.state.isLoading ?
                     (<ActivityIndicator color={R.colors.darkGreen} size={'large'} />)
                     :
-                    <>
-                        <FlatList
-                            data={this.state.details}
-                            keyExtractor={(item, index) => index}
-                            renderItem={this.renderItem}
-                            ListFooterComponent={this.renderFooter}
-                            contentContainerStyle={{ paddingBottom: 10 }}
-                        />
-                    </>
+                    <View style={{ flex: 1, }}>
+                        <Text style={{ color: R.colors.darkGreen, fontWeight: 'bold', fontSize: 28, padding: 30, paddingTop:0, paddingBottom: 0 }}>Raw Materials </Text>
+                        <View style={{ flex: 1, flexDirection: 'row', maxHeight: 120, padding: 30 }}>
+                            <View style={{ flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: 'white', padding: 15, borderRadius: 5, alignItems: 'center', marginEnd: 20, }}>
+                                <Text style={{ color: R.colors.darkGreen, fontWeight: 'bold', fontSize: 20 }}>Produced Item: </Text>
+                                <Text style={{ color: R.colors.darkGreen, fontSize: 18 }}>{order?.itemName}</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', alignSelf: 'flex-start', backgroundColor: 'white', padding: 15, borderRadius: 5, alignItems: 'center', }}>
+                                <Text style={{ color: R.colors.darkGreen, fontWeight: 'bold', fontSize: 20 }}>Quantity: </Text>
+                                <Text style={{ color: R.colors.darkGreen, fontSize: 18 }}>{order?.qty}</Text>
+                            </View>
+                        </View>
+                        <View style={{ flex: 8 }}>
+                            <FlatList
+                                data={this.state.details}
+                                keyExtractor={(item, index) => index}
+                                renderItem={this.renderItem}
+                                ListFooterComponent={this.renderFooter}
+                                contentContainerStyle={{ paddingBottom: 10 }}
+                            />
+                        </View>
+                    </View>
                 }
                 <AddItemModal
                     show={this.state.showModal}
                     hide={this.hideModal}
                     actionId={this.state.actionId}
-                    add={this.addItem} />
+                    add={this.addItem}
+                    FromTab={5} />
 
             </Screen>
         );
