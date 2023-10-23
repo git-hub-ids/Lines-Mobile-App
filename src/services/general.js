@@ -10,8 +10,10 @@ export const servicesUrl = {
     getOrders: '/WorkFlow/FlowData',
     getItems: '/Items/',
     getUnits: '/Items/',
-    getWarehouses: '/Warehouses?withoutIntermediate=true',
-
+    // getWarehouses: '/Warehouses?withoutIntermediate=true',
+    getWarehouses: '/WorkFlow/ProductionCenterWhouses',
+    getIntermediateWarehouse: '/Settings/10071',
+    getAvailableQty:'/WarehouseUnits/GroupedByWarehouse/',
     /* POST */
     postLogin: '/Auth/Login',
     getOrderDetails: '/WorkFlow/FlowDataDetail',

@@ -83,7 +83,8 @@ export const DrawerNavigator = () => {
                         </View>
                         <View style={styles.version}>
                             <Text style={[styles.text, styles.bold]} >{translate('version')}: </Text>
-                            <Text style={styles.text}>{Constants.manifest.version}</Text>
+                            {/* {Constants.manifest.version} */}
+                            <Text style={styles.text}>2.62</Text>
                         </View>
                         <DrawerItem labelStyle={[styles.text, styles.drawerItem]} label={translate('logout')}
                             icon={() => <Image style={styles.icon} source={R.images.logOut} />}

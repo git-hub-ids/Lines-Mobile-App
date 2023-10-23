@@ -21,33 +21,107 @@ export default class RawItemDetails extends React.PureComponent {
             unit: this.props.item?.unit,
             unitId: this.props.item?.unitId,
             units: [],
+            // expiry:[],
             openWarehouse: false,
             fromWhouseName: this.props.item.fromWhouseName,
             fromWhouseId: this.props.item.fromWhouseId,
             toWhouseId: this.props.item.toWhouseId,
             warehouses: [],
             showWhouseError: false,
-            expiryDate: "",
+            expiryDate: this.props.item?.expiryDate
+            // ? moment(this.props.item?.expiryDate, "YYYY-MM-DD").format("DD/MM/YYYY")
+            // : "",
+            ,
+            specs: [],
+            specsOptions: [],
+            isExpiryDateRequired: true,
             isValidDate: true,
             isExpanded: false,
-            isLoaded: false
+            isLoaded: false,
+            showQtyError: false,
+            availableQty: 0,
         };
     }
 
     componentDidMount() {
         let item = this.props.item;
-        console.log(item)
-        this.setState({ expiryDate: item.expiryDate ? item.expiryDate : "" });
+        this.setState({ expiryDate: item.expiryDate ? item.expiryDate : "", showQtyError: false });
     }
 
     expand = async () => {
+
+        // this.setState({expiryDate: this.props.item?.expiryDate
+        //     ? moment(this.props.item?.expiryDate, "YYYY-MM-DD").format("DD/MM/YYYY")
+        //     : "",})
+        this.setState({ showQtyError: false })
+        let item = await services.getItem(this.state.item.itemId);
+        const specs = item.specExpiryList;
+        this.setState({ specs })
+
+        // this.setState({
+        //     expiryDate: this.state.expiryDate
+        //         ? moment(this.state.expiryDate, "DD/MM/YYYY").format("YYYY-MM-DD")
+        //         : "",
+        // });
+
+
+        const isExpiryDateRequired = item.isExpiry;
+        // let specsOptions = null;
+        //  if(specs != undefined)
+        let specsOptions = specs.map((i) => {
+            return { id: i.spec, value: i.spec, label: i.spec };
+        });
+        if ((this.state.expiryDate == '' || !this.state.expiryDate) && this.state.spec != '') {
+            let expirys = specs.map((i) => {
+                if (i.spec == this.state.spec)
+                    return i;
+            });
+            if (expirys) {
+                let expiry = expirys[0].expiryDate ? moment(expirys[0].expiryDate, "YYYY-MM-DD").format("YYYY-MM-DD")
+                    : "";
+                this.setState({ expiryDate: expiry })
+            }
+        }
+
+        // let ExpiryOptions = specs.map((i) => {
+        //     return { id:i.expiryDate? moment(i.expiryDate).format("DD/MM/YYYY"):"", value: i.expiryDate?moment(i.expiryDate).format("DD/MM/YYYY"):"", label: i.expiryDate?moment(i.expiryDate).format("DD/MM/YYYY"):"" };
+        // });
+
+        // this.setState({ spec: this.state.item.spec });
+        // this.setLotNumber(this.state.item.spec);
+        let expiry = this.state.expiryDate
+            ? moment(this.state.expiryDate, "YYYY-MM-DD").format("YYYY-MM-DD")
+            : "";
         let units = this.state.units;
         let warehouses = this.state.warehouses;
         if (!this.state.isLoaded) {
             units = await services.getUnits(this.props.item.itemId)
-            warehouses = await services.getWarehouses()
+            warehouses = await services.getWarehouses(false);
         }
-        this.setState({ units, warehouses, isLoaded: true, isExpanded: !this.state.isExpanded })
+        var selectedWhouse = warehouses.find((w) => w.id == this.state.fromWhouseId);
+        if (selectedWhouse == undefined || selectedWhouse == null)
+            this.setState({
+                fromWhouseId: 0
+            })
+        if (warehouses.length === 1) {
+            this.setState({
+                fromWhouseId: warehouses[0].id
+            })
+
+        }
+        this.setState({ units, warehouses, isLoaded: true, isExpanded: !this.state.isExpanded, specs, specsOptions, isExpiryDateRequired, })
+        let availableQty = 0;
+
+        const whouseQty = await services.getAvailableQty(this.state.item.itemId, this.state.fromWhouseId, this.state.spec, expiry);
+        availableQty = whouseQty;
+
+        this.setState((state) => ({
+            availableQty,
+            showQtyError: this.state.qty > availableQty
+        }));
+        console.log('33333333333',this.state.showQtyError)
+
+        global["QtyError"] = this.state.showQtyError;
     }
 
     setUnit(unitId) {
@@ -58,25 +132,85 @@ export default class RawItemDetails extends React.PureComponent {
         this.setState({ unit: unit.label, unitId });
     }
 
-    setFromWarehouse(fromWhouseId) {
+    async setFromWarehouse(fromWhouseId) {
+        let availableQty = 0;
+        let expiry = this.state.expiryDate
+            ? moment(this.state.expiryDate, "YYYY-MM-DD").format("YYYY-MM-DD")
+            : "";
+        const whouseQty = await services.getAvailableQty(this.state.item.itemId, fromWhouseId, this.state.spec, expiry);
+        availableQty = whouseQty;
+
         this.setState({ fromWhouseId }, () => {
             const { toWhouseId } = this.state;
-            this.setState({ showWhouseError: toWhouseId > 0 && (fromWhouseId == toWhouseId) })
+            this.setState({ availableQty, showQtyError: this.state.qty > availableQty, showWhouseError: toWhouseId > 0 && (fromWhouseId == toWhouseId) })
         });
+        console.log('444444444444',this.state.showQtyError)
+
+        global["QtyError"] = this.state.showQtyError;
     }
 
-    setToWarehouse(toWhouseId) {
+    async setToWarehouse(toWhouseId) {
+
         this.setState({ toWhouseId }, () => {
             const { fromWhouseId } = this.state;
-            this.setState({ showWhouseError: fromWhouseId > 0 && (fromWhouseId == toWhouseId) })
+            this.setState({ showWhouseError: fromWhouseId > 0 && (fromWhouseId == toWhouseId), showQtyError: qty > availableQty })
         });
     }
 
-    setExpiryDate(expiryDate) {
-        isValidDate = validateDate(expiryDate);
+    async setExpiryDate(expiryDate) {
+        let isValidDate = validateDate(expiryDate);
+        // let expiry = expiryDate
+        // ? moment(expiryDate, "DD/MM/YYYY").format("YYYY-MM-DD")
+        // : "";
+        // const whouseQty = await services.getAvailableQty(this.state.item.itemId, this.state.fromWhouseId, this.state.spec, expiry);
+        // let availableQty = whouseQty;
+        // this.setState((state) => ({
+        //     availableQty,
+        //     showQtyError: this.state.qty > availableQty
+        // }));
         this.setState({ expiryDate, isValidDate })
     }
+    async setLotNumber(spec) {
+        const { expiryDate, specs, warehouses, fromWhouseId, qty } = this.state;
+        // const selectedWhouse = warehouses.find((e) => e.id === fromWhouseId).label;
+        const info = specs.find((i) => i.spec === spec);
+        if (info) {
 
+            this.setState({
+                spec,
+                expiryDate: info.expiryDate
+            });
+            let expiry = info.expiryDate
+                ? moment(info.expiryDate, "YYYY-MM-DD").format("YYYY-MM-DD")
+                : "";
+            // this.setState({
+            //     expiryDate: info.expiryDate
+            //         ? moment(info.expiryDate, "YYYY-MM-DD").format("DD/MM/YYYY")
+            //         : ""
+            // });
+            let availableQty = 0;
+            const whouseQty = await services.getAvailableQty(this.state.item.itemId, fromWhouseId, spec, expiry);
+            availableQty = whouseQty;
+
+
+            this.setState({
+                spec,
+                availableQty,
+                showQtyError: qty > availableQty
+            });
+        }
+        console.log('2222222222222',this.state.showQtyError)
+
+        global["QtyError"] = this.state.showQtyError;
+    }
+    async setQuantity(qty) {
+        await this.setState({
+            qty: qty,
+            showQtyError: qty > this.state.availableQty
+        });
+        console.log('111111111',this.state.showQtyError)
+        global["QtyError"] = this.state.showQtyError;
+    }
     done = () => {
         var item = this.props.item;
         item.spec = this.state.spec;
@@ -86,7 +220,7 @@ export default class RawItemDetails extends React.PureComponent {
         item.fromWhouseId = this.state.fromWhouseId;
         item.toWhouseId = this.state.toWhouseId;
         item.expiryDate = this.state.expiryDate;
-        item.isValid = (this.state.isValidDate && !this.state.showWhouseError && this.state.unitId > 0)
+        item.isValid = (!this.state.showQtyError && this.state.isValidDate && !this.state.showWhouseError && this.state.unitId > 0 && this.state.qty > 0 && this.state.fromWhouseId > 0)
         if (item.isValid)
             this.setState({ isExpanded: false });
     }
@@ -103,8 +237,9 @@ export default class RawItemDetails extends React.PureComponent {
         let toWhouseId = item.toWhouseId;
         let expiryDate = item.expiryDate;
         let showWhouseError = fromWhouseId == toWhouseId;
+
         //let isValidDate = item.expiryDate && item.expiryDate !== "" && validateDate(item.expiryDate);
-        this.setState({ spec, qty, unit, unitId, fromWhouseId, toWhouseId, showWhouseError, expiryDate });
+        this.setState({ spec, qty, unit, unitId, fromWhouseId, toWhouseId, showWhouseError, expiryDate, showQtyError: false });
     }
 
     render() {
@@ -207,25 +342,52 @@ export default class RawItemDetails extends React.PureComponent {
                                 <Text style={styles.title}>
                                     {translate('lotNumber')}:
                                 </Text>
-                                <TextInput
+                                <DropDownList
+                                    placeholder={translate("selectLotNumber")}
+                                    zIndex={3000}
+                                    zIndexInverse={1000}
+                                    setValue={this.setLotNumber.bind(this)}
+                                    value={this.state.spec}
+                                    items={this.state.specsOptions}
+                                />
+                                {/* <TextInput
                                     value={this.state.spec}
                                     style={styles.input}
                                     keyboardType="number-pad"
                                     returnKeyType="next"
-                                    onChangeText={spec => this.setState({ spec })}
+                                    onChangeText={spec => this.setLotNumber({ spec })}
                                     onSubmitEditing={() =>
                                         this.qtyInputRef &&
                                         this.qtyInputRef.focus()}
                                     blurOnSubmit={false}
-                                />
+                                /> */}
                             </View>
                             <View style={styles.group}>
                                 <Text style={styles.title}>
                                     {translate('expiryDate')}:
                                 </Text>
+                                {/* <TouchableOpacity
+                                    style={styles.input}
+                                    onPress={() => this.setState({ openDatePicker: true })}
+                                    disabled
+                                >
+                                    <Text>
+                                        {this.state.expiryDate && this.state.expiryDate !== ""
+                                            ? moment(this.state.expiryDate, "DD-MM-YYYY").format("DD/MM/YYYY")
+                                            : ""}
+                                    </Text>
+                                </TouchableOpacity> */}
                                 <Text style={styles.info}>
-                                    {this.state.expiryDate !== "" ? moment(this.state.expiryDate).format("DD/MM/YYYY") : ""}
+                                    {this.state.expiryDate !== "" ? moment(this.state.expiryDate, "YYYY-MM-DD").format("DD/MM/YYYY") : ""}
                                 </Text>
+                                {/* <DropDownList
+                                    placeholder={translate("selectExpiry")}
+                                    zIndex={3000}
+                                    zIndexInverse={1000}
+                                    setValue={this.setExpiryDate.bind(this)}
+                                    value={this.state.expiryDate}
+                                    items={this.state.expiry}
+                                /> */}
                             </View>
                             <View style={styles.group}>
                                 <Text style={styles.title}>
@@ -236,11 +398,20 @@ export default class RawItemDetails extends React.PureComponent {
                                     value={this.state.qty + ""}
                                     style={styles.input}
                                     keyboardType="numeric"
-                                    onChangeText={qty => this.setState({ qty })}
+                                    onChangeText={(qty) => this.setQuantity(qty)}
                                     onSubmitEditing={() => Keyboard.dismiss()}
                                     blurOnSubmit={true}
                                 />
                             </View>
+                            {this.state.showQtyError && (
+                                <View style={styles.errorBox}>
+                                    <View style={{ width: "50%" }}>
+                                        <Text style={styles.error}>
+                                            {translate("msgErrorQtyUnavailable")}
+                                        </Text>
+                                    </View>
+                                </View>
+                            )}
                             {!this.state.isValidDate ?
                                 <View style={styles.errorRow}>
                                     <Text style={styles.error}>
@@ -362,7 +533,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        margin:15
+        margin: 15
     },
     button: {
         marginHorizontal: 10

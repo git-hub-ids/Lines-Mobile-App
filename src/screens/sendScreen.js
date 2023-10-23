@@ -25,14 +25,20 @@ export default class SendScreen extends React.Component {
   }
 
   componentDidMount = async () => {
+    global["LocationId"] = 0;
+    global["LocationTitle"] = "";
     this.props.navigation.setOptions({
       title: translate("send"),
+      headerTitleStyle: {
+        fontWeight: 'bold',
+        fontSize: 24
+      },
       headerStyle: { backgroundColor: R.colors.lightGrey },
       headerTintColor: R.colors.darkGreen,
       headerLeft: () => (
         <TouchableOpacity
           style={styles.btnAdd}
-          onPress={() => this.props.navigation.goBack()}
+          onPress={() => this.Back()}
         >
           <Icon
             name={
@@ -55,7 +61,11 @@ export default class SendScreen extends React.Component {
       ),
     });
   };
-
+  Back = () => {
+    this.props.navigation.goBack()
+    global["LocationId"] = global["StepLocationId"];
+    global["LocationTitle"] = global["StepLocationTitle"];
+  }
   hideModal = () => {
     this.setState({ showModal: false });
   };
@@ -79,6 +89,14 @@ export default class SendScreen extends React.Component {
         d.expiryDate ? (d.expiryDate = removeTime(d.expiryDate)) : null;
         return d;
       });
+      let res = details.map((d) => {
+        if (d.qty == 0) { this.setState({ isSending: false }); return d; }
+         });
+        if (res != null &&  res[0] != undefined) {
+            return;
+        }
+      if (global.QtyError == true)
+      return;
       var data = { actionId: 26, checkType: CheckType.Checkout };
       data.flowDataDetailTable = [];
       data.flowDataProdutionItems = details;
@@ -89,7 +107,7 @@ export default class SendScreen extends React.Component {
 
   renderItem = ({ item, index }) => {
     return (
-      <EditableItemSpec type={"send"} item={item} delete={this.deleteItem} />
+      <EditableItemSpec type={"send"} item={item} delete={this.deleteItem} FromTab={0} />
     );
   };
 
@@ -120,6 +138,7 @@ export default class SendScreen extends React.Component {
           show={this.state.showModal}
           hide={this.hideModal}
           add={this.addItem}
+          FromTab={0}
         />
       </Screen>
     );

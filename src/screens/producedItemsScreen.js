@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Screen, Button } from "components/common";
-import { AddItemModal } from "components/orders";
+import { AddProducedItemModal } from "components/orders";
 import { EditableItem } from "components/items";
 import * as services from "services/orders";
 import { translate, removeTime } from "helpers/utils";
@@ -25,6 +25,7 @@ export default class ProducedItemsScreen extends React.Component {
       showModal: false,
       isSending: false,
       isLoading: true,
+      
     };
   }
 
@@ -105,6 +106,28 @@ export default class ProducedItemsScreen extends React.Component {
             d.expiryDate ? (d.expiryDate = removeTime(d.expiryDate)) : null;
             return d;
           });
+          let warehouses = await services.getWarehouses(this.props.FromTab === 0 || this.props.FromTab === 7);
+          let whouses = details.map((d) => {
+              let selectedWhouse = warehouses.find((w) => w.id == d.fromWhouseId);
+              if (selectedWhouse == undefined || selectedWhouse == null || d.qty == 0) { this.setState({ isSending: false }); return d; }
+               });
+              if (whouses != null &&  whouses[0] != undefined) {
+                  this.setState({ isSending: false });
+                  return;
+              }
+              let res = await Promise.all(details.map(async (d) => {
+                let item = await services.getItem(d.itemId); 
+                const isExpiryDateRequired = item.isExpiry;
+                if(isExpiryDateRequired == 1 && d.expiryDate == null ){
+                    return d;
+                }
+             }));
+             if(res[0] != undefined){
+                this.setState({ isSending: false });
+                return ;
+             }
+              if (global.ExpiryDateError == true)
+              {this.setState({ isSending: false });return;}
           var data = {
             actionId: order.actionID,
             checkType: CheckType.Checkout,
@@ -126,6 +149,7 @@ export default class ProducedItemsScreen extends React.Component {
         item={item}
         actionId={this.state.actionId}
         delete={this.deleteItem}
+        FromTab={1}
       />
     );
   };
@@ -156,11 +180,12 @@ export default class ProducedItemsScreen extends React.Component {
             contentContainerStyle={{ paddingBottom: 10 }}
           />
         )}
-        <AddItemModal
+        <AddProducedItemModal
           show={this.state.showModal}
           hide={this.hideModal}
           actionId={this.state.actionId}
           add={this.addItem}
+          FromTab={1}
         />
       </Screen>
     );

@@ -39,6 +39,9 @@ export default class EditableItem extends React.PureComponent {
       openDatePicker: false,
       isExpanded: false,
       isLoaded: false,
+      isExpiryDateRequired: true,
+      specs: [],
+      specsOptions: [],
     };
   }
 
@@ -48,17 +51,66 @@ export default class EditableItem extends React.PureComponent {
   }
 
   expand = async () => {
+    let item = await services.getItem(this.state.item.itemId);
     let { units, warehouses } = this.state.units;
-    if (!this.state.isLoaded) {
+    //if (!this.state.isLoaded) {
       units = await services.getUnits(this.props.item.itemId);
-      warehouses = await services.getWarehouses();
-    }
+     
+    //}
+    warehouses = await services.getWarehouses(this.props.FromTab === 0|| this.props.FromTab === 7);
+
+    var selectedWhouse = warehouses.find((w) => w.id == this.state.fromWhouseId);
+    if(selectedWhouse == undefined || selectedWhouse == null )
+    this.setState({
+      fromWhouseId : 0
+    })
+    if (warehouses.length === 1) {
+      this.setState({
+          fromWhouseId: warehouses[0].id
+      })
+
+  }
     this.setState({
       units,
       warehouses,
       isLoaded: true,
       isExpanded: !this.state.isExpanded,
     });
+    const specs = item.specExpiryList;
+        this.setState({ specs })
+        let expiry = this.state.expiryDate
+            ? moment(this.state.expiryDate, "DD/MM/YYYY").format("YYYY-MM-DD")
+            : "";
+        // this.setState({
+        //     expiryDate: this.state.expiryDate
+        //         ? moment(this.state.expiryDate, "DD/MM/YYYY").format("YYYY-MM-DD")
+        //         : "",
+        // });
+        const isExpiryDateRequired = item.isExpiry;
+        // let specsOptions = null;
+        //  if(specs != undefined)
+        let specsOptions = specs.map((i) => {
+            return { id: i.spec, value: i.spec, label: i.spec };
+        });
+    let availableQty = 0;
+
+    if(this.props.FromTab == 7){
+      const whouseQty =  await services.getAvailableQty(this.state.item.itemId,global["IntermediateWarehouse"], this.state.spec, expiry);
+      availableQty = whouseQty ;
+     
+    }
+    else if(this.props.FromTab == 0 || this.props.FromTab == 5 ){
+      
+      const whouseQty =  await services.getAvailableQty(this.state.item.itemId,this.state.fromWhouseId, this.state.spec, expiry);
+      availableQty = whouseQty ;
+    }
+    this.setState((state) => ({
+      availableQty,
+      isExpiryDateRequired, specs, specsOptions
+    }));
+    if ((!this.state.expiryDate || this.state.expiryDate === '') && this.state.isExpiryDateRequired) 
+      this.setState({ showExpiryDateError: true });
+    global["ExpiryDateError"] = this.state.showExpiryDateError;
   };
 
   setUnit(unitId) {
@@ -68,11 +120,24 @@ export default class EditableItem extends React.PureComponent {
     this.setState({ unit: unit.label, unitId });
   }
 
-  setFromWarehouse(fromWhouseId) {
+  async setFromWarehouse(fromWhouseId) {
+    let availableQty = 0;
+    if(this.props.FromTab == 7){
+      const whouseQty =  await services.getAvailableQty(this.state.item.id,global["IntermediateWarehouse"], this.state.spec, this.state.expiryDate);
+      availableQty = whouseQty ;
+     
+    }
+    else if(this.props.FromTab == 0 || this.props.FromTab == 5){
+      const whouseQty =  await services.getAvailableQty(this.state.item.id,fromWhouseId, this.state.spec, this.state.expiryDate);
+      availableQty = whouseQty ;
+    }
     this.setState((state) => ({
+      availableQty,
       fromWhouseId,
       showWhouseError: state.toWhouseId > 0 && fromWhouseId == state.toWhouseId,
+      showQtyError: this.state.qty > availableQty && (this.props.FromTab == 0 ||this.props.FromTab == 5 || this.props.FromTab == 7 )
     }));
+   
   }
 
   setToWarehouse(toWhouseId) {
@@ -85,7 +150,8 @@ export default class EditableItem extends React.PureComponent {
 
   setExpiryDate(expiryDate) {
     isValidDate = validateDate(expiryDate);
-    this.setState({ expiryDate, isValidDate, openDatePicker: false });
+    this.setState({ expiryDate, isValidDate, openDatePicker: false ,showExpiryDateError:false});
+    global["ExpiryDateError"] = this.state.showExpiryDateError;
   }
 
   done = () => {
@@ -97,13 +163,25 @@ export default class EditableItem extends React.PureComponent {
     item.fromWhouseId = this.state.fromWhouseId;
     item.toWhouseId = this.state.toWhouseId;
     item.expiryDate = this.state.expiryDate;
+    if ((!item.expiryDate || item.expiryDate === '') && this.state.isExpiryDateRequired) {
+      this.setState({ showExpiryDateError: true });
+      global["ExpiryDateError"] = this.state.showExpiryDateError;
+      return;
+    }
     item.isValid =
       this.state.isValidDate &&
       !this.state.showWhouseError &&
+      this.state.fromWhouseId >0 &&
+      this.state.qty > 0 && 
       this.state.unitId > 0;
     if (item.isValid) this.setState({ isExpanded: false });
   };
-
+  setQuantity(qty) {
+    this.setState((state) => ({
+      qty,
+      showQtyError: qty > state.availableQty && (this.props.FromTab == 0 ||this.props.FromTab == 5 || this.props.FromTab == 7 )
+    }));
+  }
   reset = () => {
     let defaultItem = this.state.item;
     let item = this.props.item;
@@ -126,6 +204,7 @@ export default class EditableItem extends React.PureComponent {
       toWhouseId,
       showWhouseError,
       expiryDate,
+      showExpiryDateError:false
     });
   };
 
@@ -169,7 +248,7 @@ export default class EditableItem extends React.PureComponent {
                 <TextInput
                   value={this.state.spec}
                   style={styles.input}
-                  keyboardType="number-pad"
+                  // keyboardType="number-pad"
                   returnKeyType="next"
                   onChangeText={(spec) => this.setState({ spec })}
                   onSubmitEditing={() =>
@@ -189,7 +268,7 @@ export default class EditableItem extends React.PureComponent {
                   value={this.state.qty + ""}
                   style={styles.input}
                   keyboardType="numeric"
-                  onChangeText={(qty) => this.setState({ qty })}
+                  onChangeText={(qty) => this.setQuantity(qty)}
                   onSubmitEditing={() => Keyboard.dismiss()}
                   blurOnSubmit={true}
                 />
@@ -214,7 +293,7 @@ export default class EditableItem extends React.PureComponent {
                   </Text>
                 </View>
               </View>
-            )}
+            )}            
             {this.props.actionId == 26 ? (
               <>
                 <View style={styles.row}>

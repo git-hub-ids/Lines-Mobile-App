@@ -1,5 +1,4 @@
 import * as general from "services/general";
-
 export async function getOrders(
   locationId,
   stepId,
@@ -9,6 +8,7 @@ export async function getOrders(
   orderBy = 0
 ) {
   var path = `${general.servicesUrl.getOrders}?ProductionCenterId=${locationId}&stepId=${stepId}&status=${status}&skip=${skip}&take=${take}&OrderBy=${orderBy}`;
+  console.log(path)
   return await general.get(path, true).then((response) => {
     return response;
   });
@@ -23,6 +23,7 @@ export async function searchOrders(locationId, stepId, searchText) {
 
 export async function getOrderDetails(item, checkType) {
   var path = `${general.servicesUrl.getOrderDetails}?checkType=${checkType}`;
+  console.log(path)
   return await general.post(path, item, true).then((response) => {
     return response.map(function (item) {
       item.expiryDate = formatDate(item.expiryDate);
@@ -59,9 +60,14 @@ export async function getItems(skip, take, text = "") {
   let search = "";
   if (text !== "") search = `&search=${text}`;
   var path = `${general.servicesUrl.getItems}Skip/${skip}/Take/${take}?OnlyItem=1&invoiceKind=70&currencyId=1${search}`;
+  console.log(path)
   let response = await general.get(path, true).then((response) => {
+    console.log('response1 '+response)
     return response;
   });
+  console.log('response2 '+response)
+
+
   return formatItems(response);
 }
 
@@ -73,11 +79,35 @@ export async function getUnits(itemId) {
   return formatUnits(response);
 }
 
-export async function getWarehouses() {
+// export async function getWarehouses() {
+//   let warehouses = global.warehouses;
+//   if (!warehouses || warehouses.length == 0) {
+//     let response = await general
+//       .get(general.servicesUrl.getWarehouses, true)
+//       .then((response) => {
+//         return response;
+//       });
+//     warehouses = formatWarehouses(response);
+//     global["warehouses"];
+//   }
+//   return warehouses;
+// }
+export async function getIntermediateWarehouse() {
+  let response = await general
+    .get(general.servicesUrl.getIntermediateWarehouse, true)
+    .then((response) => {
+      return response;
+    });
+  global["IntermediateWarehouse"] = response[0].value;
+  return response[0].value;
+}
+export async function getWarehouses(withoutIntermediate = false) {
   let warehouses = global.warehouses;
+
   if (!warehouses || warehouses.length == 0) {
+    var path = `${general.servicesUrl.getWarehouses}?ProductionCenterID=${global.LocationId}&withoutIntermediate=${withoutIntermediate}`;
     let response = await general
-      .get(general.servicesUrl.getWarehouses, true)
+      .get(path, true)
       .then((response) => {
         return response;
       });
@@ -85,6 +115,22 @@ export async function getWarehouses() {
     global["warehouses"];
   }
   return warehouses;
+}
+
+export async function getAvailableQty(itemId, whouseId, spec = '', expiry = '') {
+  if (global.LocationId == null)
+    global.LocationId = 0;
+  var path = `${general.servicesUrl.getAvailableQty}${itemId}?whouseId=${whouseId}`;
+  if (spec != '')
+    path = path + `&spec=${spec}`
+  if (expiry != '')
+    path = path + `&expiryDate=${expiry}`
+  let response = await general
+    .get(path, true)
+    .then((response) => {
+      return response;
+    });
+  return response[0].onHand;
 }
 
 function formatDate(date) {

@@ -58,26 +58,41 @@ export default class DropDownList extends React.Component {
         }));
     }
 
+    // search = async (text) => {
+    //     let delay = 0
+    //     if (this.state.searchText !== text)
+    //         delay = 2000;
+    //     this.setState({ searchText: text }, () => {
+    //         setTimeout(async () => {
+    //             console.log('this.state.searchText=> ',this.state.searchText)
+    //             if (!this.state.isLoading) {
+    //                 this.setState({ isLoading: false }, async () => {
+    //                     let { skip, searchText, items } = this.state;
+    //                     skip = 0;
+    //                     items = [];
+    //                     let searchedItems = await services.getItems(skip, 20, searchText);
+    //                     let resultItems = items.concat(searchedItems);
+    //                     this.setState({ items: resultItems, searchText, skip, isLoading: false })
+    //                 })
+    //             }
+    //         }, delay);
+    //     })
+    // }
     search = async (text) => {
-        let delay = 0
-        if (this.state.searchText !== text)
-            delay = 5000;
-        this.setState({ searchText: text }, () => {
-            setTimeout(async () => {
-                if (!this.state.isLoading) {
-                    this.setState({ isLoading: true }, async () => {
-                        let { skip, searchText, items } = this.state;
-                        skip = 0;
-                        items = [];
-                        let searchedItems = await services.getItems(skip, 20, searchText);
-                        let resultItems = items.concat(searchedItems);
-                        this.setState({ items: resultItems, searchText, skip, isLoading: false })
-                    })
-                }
-            }, delay);
-        })
-    }
-
+        if (this.state.searchText === text) return;
+       //setTimeout(() => {       
+        this.setState({ 
+          searchText: text, 
+          isLoading: false, 
+          skip: 0, 
+          items: [] 
+        }, async () => {
+          let searchedItems = await services.getItems(0, 20, text);
+          let resultItems = searchedItems;
+          this.setState({ items: resultItems, isLoading: false })
+        });
+   // }, 2000);
+      }
     loadMore = async () => {
         let { skip, searchText, items } = this.state;
         skip += 20;

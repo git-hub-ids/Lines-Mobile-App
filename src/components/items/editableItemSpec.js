@@ -44,26 +44,37 @@ export default class EditableItemSpec extends React.PureComponent {
       isExpanded: false,
       isLoaded: false,
     };
+
   }
 
   componentDidMount() {
     let item = this.props.item;
     this.setState({ expiryDate: item.expiryDate ? item.expiryDate : "" });
+
   }
 
   expand = async () => {
     let { units, specs, specsOptions, warehouses, isExpiryDateRequired } =
       this.state;
     if (!this.state.isLoaded) {
+
       item = await services.getItem(this.props.item.itemId);
       units = item?.units;
       specs = item?.specExpiryList;
       specsOptions = specs?.map((i) => {
         return { id: i.spec, value: i.spec, label: i.spec };
       });
-      warehouses = await services.getWarehouses();
+      global["LocationId"] = 0;
+      warehouses = await services.getWarehouses(this.props.FromTab === 0 || this.props.FromTab === 7);
+      if (warehouses.length === 1) {
+        this.setState({
+            fromWhouseId: warehouses[0].id
+        })
+
+    }
       isExpiryDateRequired = item?.isExpiry;
     }
+ 
     this.setState({
       units,
       specs,
@@ -73,6 +84,28 @@ export default class EditableItemSpec extends React.PureComponent {
       isLoaded: true,
       isExpanded: !this.state.isExpanded,
     });
+
+    let expiry = this.state.expiryDate
+    ? moment(this.state.expiryDate).format("DD/MM/YYYY")
+    : "";
+
+    let availableQty = 0;
+    if (this.props.FromTab == 7) {
+      const whouseQty = await services.getAvailableQty(this.state.item.itemId, global["IntermediateWarehouse"], this.state.spec, expiry);
+      availableQty = whouseQty;
+
+    }
+    else if (this.props.FromTab == 0 || this.props.FromTab == 5) {
+      const whouseQty = await services.getAvailableQty(this.state.item.itemId, this.state.fromWhouseId, this.state.spec, expiry);
+      
+      availableQty = whouseQty;
+    }
+
+    this.setState((state) => ({
+      availableQty,
+      showQtyError: this.props.item?.qty > availableQty && (this.props.FromTab == 0 || this.props.FromTab == 5 || this.props.FromTab == 7 ),
+    }));
+    global["QtyError"] = this.state.showQtyError;
   };
 
   setUnit(unitId) {
@@ -81,18 +114,28 @@ export default class EditableItemSpec extends React.PureComponent {
     this.setState({ unit: unit.label, unitId });
   }
 
-  setFromWarehouse(fromWhouseId) {
+  async setFromWarehouse(fromWhouseId) {
     const { specs, spec, warehouses, qty } = this.state;
     const selectedWhouse = warehouses.find((e) => e.id === fromWhouseId).label;
-    const availableQty =
+    let availableQty =
       specs.find((s) => s.whouseName === selectedWhouse && s.spec === spec)
         ?.stOnHand | 0;
+    if (this.props.FromTab == 7) {
+      const whouseQty = await services.getAvailableQty(this.state.item.itemId, global["IntermediateWarehouse"], this.state.spec, this.state.expiryDate);
+      availableQty = whouseQty;
+
+    }
+    else if (this.props.FromTab == 0 || this.props.FromTab == 5) {
+      const whouseQty = await services.getAvailableQty(this.state.item.itemId, fromWhouseId, this.state.spec, this.state.expiryDate);
+      availableQty = whouseQty;
+    }
     this.setState((state) => ({
       availableQty,
       fromWhouseId,
       showWhouseError: state.toWhouseId > 0 && fromWhouseId == state.toWhouseId,
-      showQtyError: qty > availableQty,
+      showQtyError: qty > availableQty && (this.props.FromTab == 0 || this.props.FromTab == 5 || this.props.FromTab == 7)
     }));
+    global["QtyError"] = this.state.showQtyError;
   }
 
   setToWarehouse(toWhouseId) {
@@ -101,29 +144,42 @@ export default class EditableItemSpec extends React.PureComponent {
       showWhouseError:
         state.fromWhouseId > 0 && state.fromWhouseId == toWhouseId,
     }));
+    global["QtyError"] = this.state.showQtyError;
   }
 
-  setLotNumber(spec) {
+  async setLotNumber(spec) {
     const { specs, warehouses, fromWhouseId, qty } = this.state;
     const selectedWhouse = warehouses.find((e) => e.id === fromWhouseId).label;
-    const availableQty =
+    let availableQty =
       specs.find((s) => s.whouseName === selectedWhouse && s.spec === spec)
         ?.stOnHand | 0;
+    if (this.props.FromTab == 7) {
+      const whouseQty = await services.getAvailableQty(this.state.item.id, global["IntermediateWarehouse"], spec, this.state.expiryDate);
+      availableQty = whouseQty;
+    }
+    else if (this.props.FromTab == 0 || this.props.FromTab == 5) {
+      const whouseQty = await services.getAvailableQty(this.state.item.id, fromWhouseId, spec, this.state.expiryDate);
+      availableQty = whouseQty;
+    }
     const info = specs.find((i) => i.spec === spec);
     if (info)
       this.setState({
         spec,
         availableQty,
         expiryDate: moment(info.expiryDate).format("DD/MM/YYYY"),
-        showQtyError: qty > availableQty,
+        showQtyError: qty > availableQty && (this.props.FromTab == 0 || this.props.FromTab == 5 || this.props.FromTab == 7)
       });
+    global["QtyError"] = this.state.showQtyError;
   }
 
-  setQuantity(qty) {
-    this.setState((state) => ({
+  async setQuantity(qty) {
+
+    await this.setState((state) => ({
       qty,
-      showQtyError: qty > state.availableQty,
+      showQtyError: qty > this.state.availableQty && (this.props.FromTab == 0 || this.props.FromTab == 5 || this.props.FromTab == 7)
     }));
+
+    global["QtyError"] = this.state.showQtyError;  
   }
 
   setExpiryDate(expiryDate) {
@@ -141,6 +197,7 @@ export default class EditableItemSpec extends React.PureComponent {
     item.toWhouseId = this.state.toWhouseId;
     item.expiryDate = this.state.expiryDate;
     item.isValid =
+      item.qty > 0 &&
       this.state.isValidDate &&
       !this.state.showWhouseError &&
       !this.state.showQtyError &&

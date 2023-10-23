@@ -1,6 +1,6 @@
 import React from "react";
 import { SectionList, View, ActivityIndicator } from "react-native";
-import { Header, ListItem, Screen } from "components/common";
+import { Header, ListItem, Screen, Text } from "components/common";
 import * as services from "services/lookup";
 import { translate } from "helpers/utils";
 import R from 'res/R';
@@ -18,6 +18,7 @@ export default class StepsScreen extends React.Component {
     }
 
     componentDidMount = async () => {
+
         await this.init();
     }
 
@@ -27,16 +28,19 @@ export default class StepsScreen extends React.Component {
             var locationId = this.props?.route?.params?.locationId;
             // in case there is a single location
             // the params are null
+
             if (!locationId) {
                 locationId = global.locations[0].id;
+
                 this.props.navigation.setOptions({
                     headerLeft: () => null
                 });
             }
+           
             var steps = await services.getSteps(locationId);
             sections = [{
                 id: 0,
-                title: translate('mySteps'),
+                title: translate('mySteps') + "tets ",
                 data: steps,
             }];
         }
@@ -56,6 +60,11 @@ export default class StepsScreen extends React.Component {
     }
 
     renderHeader = () => {
+        var locationId = this.props?.route?.params?.locationId;
+        global["StepLocationTitle"] = global.locations.find(location => location.id === locationId).description;
+        global["LocationTitle"] = global.locations.find(location => location.id === locationId).description;
+        global["LocationId"] = locationId;
+        global["StepLocationId"] = locationId;
         return (
             <Header />
         )
