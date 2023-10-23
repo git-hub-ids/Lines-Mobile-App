@@ -29,6 +29,7 @@ export default class CompletedTabs extends React.Component {
         this.unsubscribe = this.props.tabsProps.navigation.addListener('focus', (e) => {
             this.init();
         });
+        this.refreshInterval = setInterval(this.init, 120000);
     }
 
     async componentDidUpdate(prevProps, prevState) {
@@ -38,6 +39,7 @@ export default class CompletedTabs extends React.Component {
 
     componentWillUnmount() {
         this.unsubscribe();
+        clearInterval(this.refreshInterval);
     }
 
     init = async () => {

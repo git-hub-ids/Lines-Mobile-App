@@ -57,8 +57,8 @@ export default class Order extends React.Component {
             <View style={styles.container}>
                 <View style={styles.details} >
                     <View>
-                        <View 
-                        style={{ marginLeft:-20}}
+                        <View
+                            style={{ marginLeft: -20 }}
                         >
                             {this.props.status !== OrderStatus.Completed ?
                                 <CheckBox
@@ -81,13 +81,37 @@ export default class Order extends React.Component {
                             </Text>
                         </View>
                         <View style={styles.group}>
-                            <Text style={styles.title}>
-                                {translate('itemName')}:
-                            </Text>
+                            {this.props.status === OrderStatus.Ready ? <Text style={styles.title}>
+                                {translate('endProduct')}:
+                            </Text> :
+                                <Text style={styles.title}>
+                                    {translate('itemName')}:
+                                </Text>}
                             <Text style={styles.info}>
                                 {item.itemName}
                             </Text>
                         </View>
+                        <View style={styles.group}>
+                            {this.props.status === OrderStatus.Ready  ? <Text style={styles.title}>
+                                {translate('readyDate')}:
+                            </Text> :
+                                <></>
+                            }
+                            <Text style={styles.info}>
+                                {item.readyDate}
+                            </Text>
+                        </View>
+                        <View style={styles.group}>
+                            {this.props.status !== OrderStatus.Completed ? <Text style={styles.title}>
+                                {translate('PhaseProducedItem')}:
+                            </Text> :
+                                <></>
+                            }
+                            {this.props.status !== OrderStatus.Completed ? <Text style={styles.info}>
+                                {item.produceditemname}
+                            </Text>:<></>
+                            }
+                         </View>
                         <View style={styles.group}>
                             <Text style={styles.title}>
                                 {translate('soNumber')}:
@@ -104,6 +128,14 @@ export default class Order extends React.Component {
                                 {item.poNumber}
                             </Text>
                         </View>
+                        {item.statusID == 2 ? (<View style={styles.group}>
+                            <Text style={styles.title}>
+                                {translate('piNumber')}:
+                            </Text>
+                            <Text style={styles.info}>
+                                {item.piNumber}
+                            </Text>
+                        </View>) : <></>}
                         <View style={styles.group}>
                             <Text style={styles.title}>
                                 {translate('clientName')}:
@@ -112,14 +144,22 @@ export default class Order extends React.Component {
                                 {item.peopleName}
                             </Text>
                         </View>
-                        <View style={styles.group}>
+                        {item.statusID == 2 ? (<View style={styles.group}>
+                            <Text style={styles.title}>
+                                {translate('finishedDate')}:
+                            </Text>
+                            <Text style={styles.info}>
+                                {item.finishDate ? moment(item.finishDate).format("DD/MM/YYYY HH:mm:ss") : ""}
+                            </Text>
+                        </View>) : (<View style={styles.group}>
                             <Text style={styles.title}>
                                 {translate('expectedDate')}:
                             </Text>
                             <Text style={styles.info}>
                                 {item.expectedDate ? moment(item.expectedDate).format("DD/MM/YYYY HH:mm:ss") : ""}
                             </Text>
-                        </View>
+                        </View>)}
+
                     </View>
                     {/* {this.props.status !== OrderStatus.Completed ?
                         <View>

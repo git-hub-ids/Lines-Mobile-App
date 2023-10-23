@@ -8,6 +8,7 @@ export async function getOrders(
   orderBy = 0
 ) {
   var path = `${general.servicesUrl.getOrders}?ProductionCenterId=${locationId}&stepId=${stepId}&status=${status}&skip=${skip}&take=${take}&OrderBy=${orderBy}`;
+  console.log(path)
   return await general.get(path, true).then((response) => {
     return response;
   });
@@ -22,6 +23,7 @@ export async function searchOrders(locationId, stepId, searchText) {
 
 export async function getOrderDetails(item, checkType) {
   var path = `${general.servicesUrl.getOrderDetails}?checkType=${checkType}`;
+  console.log(path)
   return await general.post(path, item, true).then((response) => {
     return response.map(function (item) {
       item.expiryDate = formatDate(item.expiryDate);
@@ -48,7 +50,6 @@ export async function saveCharges(data) {
 
 export async function getItem(id) {
   var path = general.servicesUrl.getItems + id;
-  console.log(path)
   let response = await general.get(path, true).then((response) => {
     return response;
   });
@@ -59,9 +60,14 @@ export async function getItems(skip, take, text = "") {
   let search = "";
   if (text !== "") search = `&search=${text}`;
   var path = `${general.servicesUrl.getItems}Skip/${skip}/Take/${take}?OnlyItem=1&invoiceKind=70&currencyId=1${search}`;
+  console.log(path)
   let response = await general.get(path, true).then((response) => {
+    console.log('response1 '+response)
     return response;
   });
+  console.log('response2 '+response)
+
+
   return formatItems(response);
 }
 
@@ -119,7 +125,6 @@ export async function getAvailableQty(itemId, whouseId, spec = '', expiry = '') 
     path = path + `&spec=${spec}`
   if (expiry != '')
     path = path + `&expiryDate=${expiry}`
-  console.log(path)
   let response = await general
     .get(path, true)
     .then((response) => {

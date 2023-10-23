@@ -47,6 +47,7 @@ export default class AddItemModal extends React.Component {
   }
 
   componentDidMount = async () => {
+    console.log(this.state.isLoading)
     await this.init();
   };
 
@@ -63,10 +64,18 @@ export default class AddItemModal extends React.Component {
     this.reset();
     this.setState({ isLoading: true }, async () => {
       let items = await services.getItems(0, 20);
+      console.log('items=>'+items);
       let warehouses = await services.getWarehouses(this.props.FromTab === 0 || this.props.FromTab === 7);
-      let IntermediateWarehouse = await services.getIntermediateWarehouse();
-      this.setState({ showUnitError: false, items, warehouses, isLoading: false, IntermediateWarehouse });
+      console.log('warehouses=>'+warehouses);
 
+      let IntermediateWarehouse = await services.getIntermediateWarehouse();
+      console.log('IntermediateWarehouse=>'+IntermediateWarehouse);
+
+      this.setState({ showUnitError: false, items, warehouses, isLoading: false, IntermediateWarehouse });
+      if(warehouses.length === 1){
+        this.setState({fromWhouseId: warehouses[0].id})
+        this.setFromWarehouse(warehouses[0].id);
+      }
     });
   };
 
@@ -78,13 +87,23 @@ export default class AddItemModal extends React.Component {
       const specsOptions = specs.map((i) => {
         return { id: i.spec, value: i.spec, label: i.spec };
       });
-      this.setState({
-        item,
-        units,
-        specs,
-        isExpiryDateRequired,
-        specsOptions,
-      });
+      this.setState(
+        {
+          item,
+          units,
+          specs,
+          isExpiryDateRequired,
+          specsOptions,
+        },
+        () => {
+          if (units.length === 1) {
+            this.setUnit(this.state.units[0].id);
+          }
+          if(specs.length ===1 ){
+            this.setLotNumber(specs[0].spec);
+          }
+        }
+      );
     }
   }
 
@@ -136,7 +155,6 @@ export default class AddItemModal extends React.Component {
 
   async setLotNumber(spec) {
     const { specs, warehouses, fromWhouseId, qty } = this.state;
-    console.log(fromWhouseId)
      if (fromWhouseId == 0) {
       const inf = specs.find((i) => i.spec === spec);
       if (inf) {
@@ -252,13 +270,17 @@ export default class AddItemModal extends React.Component {
         spec: "",
         specs: [],
         expiryDate: "",
-        fromWhouseId: 0,
-        toWhouseId: 0,
         showUnitError: false,
         showExpiryDateError: false,
         showQtyError: false,
         showWhouseError: false,
       });
+      if(this.state.warehouses.length > 1){
+        this.setState({
+          fromWhouseId: 0,
+          toWhouseId: 0,
+        });
+      }
     };
     hide() {
       this.reset();
@@ -268,6 +290,10 @@ export default class AddItemModal extends React.Component {
       return (
         <Modal show={this.props.show} hide={() => this.hide()}>
           <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+          {this.props.FromTab == 5? (<Text style={{ color: R.colors.darkGreen, fontWeight: 'bold', fontSize: 28, padding: 30, paddingTop:0, paddingBottom: 0 }}>{translate('RawMaterials')}</Text>):<></>}
+          {this.props.FromTab == 0? (<Text style={{ color: R.colors.darkGreen, fontWeight: 'bold', fontSize: 28, padding: 30, paddingTop:0, paddingBottom: 0 }}>{translate('sendItem')}</Text>):<></>}
+          {this.props.FromTab == 7? (<Text style={{ color: R.colors.darkGreen, fontWeight: 'bold', fontSize: 28, padding: 30, paddingTop:0, paddingBottom: 0 }}>{translate('receiveItem')}</Text>):<></>}
+
             {this.state.isLoading ? (
               <ActivityIndicator size={"large"} color={R.colors.darkGreen} />
             ) : (
@@ -286,11 +312,16 @@ export default class AddItemModal extends React.Component {
                   </View>
                   {this.props.actionId === ActionType.Production && (
                     <View style={styles.group}>
-                      <Text style={styles.title}>{translate("warehouse")}:</Text>
+                      { this.props.FromTab == 0
+                        ? <Text style={styles.title}>{translate("fromWarehouse")}</Text>
+                        : this.props.FromTab == 7
+                          ? <Text style={styles.title}>{translate("toWarehouse")}</Text>
+                          : <Text style={styles.title}>{translate("warehouse")}</Text>}
                       <DropDownList
                         placeholder={translate("selectWhouse")}
                         zIndex={1000}
-                        zIndexInverse={3000}
+                        zIndexInverse={3000} 
+                        value={this.state.fromWhouseId}
                         setValue={this.setFromWarehouse.bind(this)}
                         items={this.state.warehouses}
                       />
@@ -304,6 +335,7 @@ export default class AddItemModal extends React.Component {
                       placeholder={translate("selectLotNumber")}
                       zIndex={3000}
                       zIndexInverse={1000}
+                      value={this.state.spec}
                       setValue={this.setLotNumber.bind(this)}
                       items={this.state.specsOptions}
                     />
@@ -379,6 +411,7 @@ export default class AddItemModal extends React.Component {
                       zIndexInverse={1000}
                       setValue={this.setUnit.bind(this)}
                       items={this.state.units}
+                      value={this.state.unitId}
                     />
                   </View>
 

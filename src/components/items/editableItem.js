@@ -64,6 +64,12 @@ export default class EditableItem extends React.PureComponent {
     this.setState({
       fromWhouseId : 0
     })
+    if (warehouses.length === 1) {
+      this.setState({
+          fromWhouseId: warehouses[0].id
+      })
+
+  }
     this.setState({
       units,
       warehouses,
@@ -242,7 +248,7 @@ export default class EditableItem extends React.PureComponent {
                 <TextInput
                   value={this.state.spec}
                   style={styles.input}
-                  keyboardType="number-pad"
+                  // keyboardType="number-pad"
                   returnKeyType="next"
                   onChangeText={(spec) => this.setState({ spec })}
                   onSubmitEditing={() =>

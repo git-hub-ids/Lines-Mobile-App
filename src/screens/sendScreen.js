@@ -26,8 +26,13 @@ export default class SendScreen extends React.Component {
 
   componentDidMount = async () => {
     global["LocationId"] = 0;
+    global["LocationTitle"] = "";
     this.props.navigation.setOptions({
       title: translate("send"),
+      headerTitleStyle: {
+        fontWeight: 'bold',
+        fontSize: 24
+      },
       headerStyle: { backgroundColor: R.colors.lightGrey },
       headerTintColor: R.colors.darkGreen,
       headerLeft: () => (
@@ -59,6 +64,7 @@ export default class SendScreen extends React.Component {
   Back = () => {
     this.props.navigation.goBack()
     global["LocationId"] = global["StepLocationId"];
+    global["LocationTitle"] = global["StepLocationTitle"];
   }
   hideModal = () => {
     this.setState({ showModal: false });

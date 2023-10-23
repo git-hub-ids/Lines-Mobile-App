@@ -66,6 +66,12 @@ export default class EditableItemSpec extends React.PureComponent {
       });
       global["LocationId"] = 0;
       warehouses = await services.getWarehouses(this.props.FromTab === 0 || this.props.FromTab === 7);
+      if (warehouses.length === 1) {
+        this.setState({
+            fromWhouseId: warehouses[0].id
+        })
+
+    }
       isExpiryDateRequired = item?.isExpiry;
     }
  

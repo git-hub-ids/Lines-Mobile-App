@@ -43,10 +43,11 @@ export default class AddProducedItemModal extends React.Component {
       isLoading: true,
       showUnitError: false,
       IntermediateWarehouse: 0,
-    };
+    };       
   }
 
   componentDidMount = async () => {
+
     await this.init();
   };
 
@@ -61,12 +62,17 @@ export default class AddProducedItemModal extends React.Component {
 
   init = async () => {
     this.reset();
+    
     this.setState({ isLoading: true }, async () => {
       let items = await services.getItems(0, 20);
       let warehouses = await services.getWarehouses(this.props.FromTab === 0 || this.props.FromTab === 7);
+      console.log(warehouses)
       let IntermediateWarehouse = await services.getIntermediateWarehouse();
       this.setState({ showUnitError: false, items, warehouses, isLoading: false, IntermediateWarehouse });
-
+      if(warehouses.length === 1){
+        this.setState({fromWhouseId: warehouses[0].id})
+        this.setFromWarehouse(warehouses[0].id);
+      }
     });
   };
 
@@ -78,17 +84,26 @@ export default class AddProducedItemModal extends React.Component {
       const specsOptions = specs.map((i) => {
         return { id: i.spec, value: i.spec, label: i.spec };
       });
-      this.setState({
-        item,
-        units,
-        specs,
-        isExpiryDateRequired,
-        specsOptions,
-      });
+
+      this.setState(
+        {
+          item,
+          units,
+          specs,
+          isExpiryDateRequired,
+          specsOptions,
+        },
+        () => {
+          if (units.length === 1) {
+            this.setUnit(this.state.units[0].id);
+          }
+        }
+      );
     }
   }
 
   async setFromWarehouse(fromWhouseId) {
+    console.log(fromWhouseId)
     const { specs, spec, warehouses, qty } = this.state;
     const selectedWhouse = warehouses.find((e) => e.id === fromWhouseId).label;
 
@@ -175,9 +190,14 @@ export default class AddProducedItemModal extends React.Component {
     }));
   }
 
-  setUnit(unitId) {
+   setUnit(unitId) {
+        console.log("unitId",unitId)
     var unit = this.state.units.find((u) => u.id === unitId);
+    console.log("unit",unit);
+
     this.setState({ unitId, unit: unit.label, showUnitError: false });
+    // console.log(this.state.unitId,this.state.unit)
+    // console.log(unitId,unit.label)
   }
 
   add = () => {
@@ -238,13 +258,17 @@ export default class AddProducedItemModal extends React.Component {
       spec: "",
       specs: [],
       expiryDate: "",
-      fromWhouseId: 0,
-      toWhouseId: 0,
       showUnitError: false,
       showExpiryDateError: false,
       showQtyError: false,
       showWhouseError: false,
     });
+    if(this.state.warehouses.length > 1){
+      this.setState({
+        fromWhouseId: 0,
+        toWhouseId: 0,
+      });
+    }
   };
   hide() {
     this.reset();
@@ -254,6 +278,7 @@ export default class AddProducedItemModal extends React.Component {
     return (
       <Modal show={this.props.show} hide={() => this.hide()}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+          <Text style={{ color: R.colors.darkGreen, fontWeight: 'bold', fontSize: 28, padding: 30, paddingTop: 0, paddingBottom: 0 }}>Finished Product</Text>
           {this.state.isLoading ? (
             <ActivityIndicator size={"large"} color={R.colors.darkGreen} />
           ) : (
@@ -277,6 +302,7 @@ export default class AddProducedItemModal extends React.Component {
                       placeholder={translate("selectWhouse")}
                       zIndex={1000}
                       zIndexInverse={3000}
+                      value={this.state.fromWhouseId}
                       setValue={this.setFromWarehouse.bind(this)}
                       items={this.state.warehouses}
                     />
@@ -294,16 +320,16 @@ export default class AddProducedItemModal extends React.Component {
                     items={this.state.specsOptions}
                   /> */}
                   <TextInput
-                  value={this.state.spec}
-                  style={styles.input}
-                  keyboardType="number-pad"
-                  returnKeyType="next"
-                  onChangeText={(spec) => this.setState({ spec })}
-                  onSubmitEditing={() =>
-                    this.qtyInputRef && this.qtyInputRef.focus()
-                  }
-                  blurOnSubmit={false}
-                />
+                    value={this.state.spec}
+                    style={styles.input}
+                    // keyboardType="number-pad"
+                    returnKeyType="next"
+                    onChangeText={(spec) => this.setState({ spec })}
+                    onSubmitEditing={() =>
+                      this.qtyInputRef && this.qtyInputRef.focus()
+                    }
+                    blurOnSubmit={false}
+                  />
                 </View>
                 <View style={styles.group}>
                   <Text style={styles.title}>{translate("quantity")}:</Text>
@@ -338,6 +364,7 @@ export default class AddProducedItemModal extends React.Component {
                         placeholder={translate("selectWhouse")}
                         zIndex={1000}
                         zIndexInverse={3000}
+                        value={this.state.fromWhouseId}
                         setValue={this.setFromWarehouse.bind(this)}
                         items={this.state.warehouses}
                       />
@@ -350,6 +377,7 @@ export default class AddProducedItemModal extends React.Component {
                         placeholder={translate("selectWhouse")}
                         zIndex={1000}
                         zIndexInverse={3000}
+                        value={this.state.toWhouseId}
                         setValue={this.setToWarehouse.bind(this)}
                         items={this.state.warehouses}
                       />
@@ -376,6 +404,8 @@ export default class AddProducedItemModal extends React.Component {
                     zIndexInverse={1000}
                     setValue={this.setUnit.bind(this)}
                     items={this.state.units}
+                    value={this.state.unitId}
+                    
                   />
                 </View>
 
@@ -393,15 +423,15 @@ export default class AddProducedItemModal extends React.Component {
                     </Text>
                   </TouchableOpacity> */}
                   <TouchableOpacity
-                  style={styles.input}
-                  onPress={() => this.setState({ openDatePicker: true, showExpiryDateError:false })}
-                >
-                  <Text>
-                    {this.state.expiryDate !== ""
-                      ? moment(this.state.expiryDate).format("DD/MM/YYYY")
-                      : ""}
-                  </Text>
-                </TouchableOpacity>
+                    style={styles.input}
+                    onPress={() => this.setState({ openDatePicker: true, showExpiryDateError: false })}
+                  >
+                    <Text>
+                      {this.state.expiryDate !== ""
+                        ? moment(this.state.expiryDate).format("DD/MM/YYYY")
+                        : ""}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
               {this.state.showUnitError && (
