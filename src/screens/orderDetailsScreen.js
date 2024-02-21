@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from "react-native";
+import { Dimensions } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Screen, Button } from "components/common";
 import { RawItemDetails, AddItemModal } from "components/orders";
@@ -104,7 +105,6 @@ export default class OrderDetailsScreen extends React.Component {
   // }
   deleteItem = (flowDataId, itemId) => {
     let details = this.state.details;
-    console.log(flowDataId, itemId);
     details = details.filter(
       (item) => !(item.itemId == itemId && item.flowId == flowDataId)
     );
@@ -197,6 +197,7 @@ export default class OrderDetailsScreen extends React.Component {
           };
           data.flowDataDetailTable = selectedOrders;
           data.flowDataProdutionItems = details;
+          data.ProductionCenterID = global["LocationId"];
           var response = await services.saveOrder(data);
           this.props.navigation.goBack();
           this.props.route.params.onBack();
@@ -276,6 +277,11 @@ export default class OrderDetailsScreen extends React.Component {
   render() {
     const selectedOrders = this.state.selectedOrders;
 
+    const { width, height } = Dimensions.get("window");
+    const buttonPosition = {
+      top: height * 0.08, // Adjust the percentage as needed
+      right: width * 0.06, // Adjust the percentage as needed
+    };
     return (
       <Screen>
         {this.state.isLoading ? (
@@ -291,33 +297,52 @@ export default class OrderDetailsScreen extends React.Component {
                   {index <= selectedOrders.length - 1 && (
                     <View style={styles.separator} />
                   )}
-
                   <View style={styles.itemContainer}>
+                    {/* Move quantity to the left */}
                     <View style={styles.leftContent}>
                       <Text style={styles.itemText}>
-                        {translate("ProducedItem")}: <Text style={styles.item}>{order.produceditemname}</Text>
-                      </Text>
-                      <Text style={styles.quantityText}>
-                        {translate("quantity")}: <Text style={styles.quantity}>{order.qty}</Text>
+                        <Text style={styles.boldText}>
+                          {translate("ProducedItem")}:{" "}
+                        </Text>
+                        <Text style={styles.item}>
+                          {order.produceditemname}
+                        </Text>
                       </Text>
                     </View>
+
+                    {/* Move product name to the right */}
                     <View style={styles.rightContent}>
-                      <Text style={styles.AddRawMaterial}>
-                        {translate("AddRawMaterial")}  
+                      <Text style={styles.itemText}>
+                        <Text style={styles.boldText}>
+                          {translate("quantity")}:{" "}
+                        </Text>
+                        <Text style={styles.item}>
+                          {order.producedqty}
+                          {order.producedUnit}
+                        </Text>
                       </Text>
-                      <TouchableOpacity
-                        style={styles.addButton}
-                        onPress={() =>
-                          this.setState({
-                            showModal: true,
-                            selectedOrderIndex: order.flowDataId,
-                          })
-                        }
-                      >
-                        <Icon name="add-outline" color="#fff" size={30} />
-                      </TouchableOpacity>
                     </View>
                   </View>
+
+                  {/* Add a line and a title above the Add button */}
+
+                  <View style={styles.titleContainer2}>
+                    <View style={styles.titleLine} />
+                    <Text style={styles.titleText}>Raw Materials</Text>
+                  </View>
+
+                  {/* Add button aligned to the right */}
+                  <TouchableOpacity
+                    style={[styles.addButton, styles.absoluteButton, buttonPosition]}
+                    onPress={() =>
+                      this.setState({
+                        showModal: true,
+                        selectedOrderIndex: order.flowDataId,
+                      })
+                    }
+                  >
+                    <Icon name="add-outline" color="#fff" size={30} />
+                  </TouchableOpacity>
 
                   <View style={{ flex: 8 }}>
                     {orderDetails.map((item, itemIndex) => (
@@ -367,6 +392,41 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
   },
+
+  titleContainer2: {
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  titleLine: {
+    borderBottomWidth: 1,
+    borderBottomColor: R.colors.darkGreen,
+    width: "80%",
+    marginBottom: 5,
+  },
+  titleText: {
+    color: R.colors.darkGreen,
+    fontSize: 30,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  addButton: {
+    backgroundColor: R.colors.darkGreen,
+    padding: 8,
+    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  absoluteButton: {
+    position: 'absolute',
+    top: 120, // Adjust the top positioning as needed
+    right: 30, // Adjust the right positioning as needed
+  },
+
+  unit: {
+    color: R.colors.darkGreen,
+    fontSize: 25, // Adjust the font size for the unit as needed
+    marginBottom: 5,
+  },
   leftContent: {
     flex: 1,
     paddingRight: 10, // Add right padding for spacing
@@ -377,19 +437,23 @@ const styles = StyleSheet.create({
   },
   itemText: {
     color: R.colors.darkGreen,
+    fontSize: 20,
+    marginBottom: 5,
+  },
+  boldText: {
+    color: R.colors.darkGreen,
     fontWeight: "bold",
-    fontSize: 30,
+    fontSize: 20, // Adjust the font size as needed
     marginBottom: 5,
   },
   item: {
     color: R.colors.darkGreen,
-    fontSize: 25,
+    fontSize: 15,
     marginBottom: 5,
   },
   quantityText: {
     color: R.colors.darkGreen,
-    fontSize: 30,
-    fontWeight: "bold",
+    fontSize: 35,
     marginBottom: 5,
   },
   quantity: {
@@ -397,18 +461,11 @@ const styles = StyleSheet.create({
     fontSize: 25,
     marginBottom: 5,
   },
-  AddRawMaterial:{
+  AddRawMaterial: {
     color: R.colors.darkGreen,
     fontSize: 25,
     fontWeight: "bold",
     marginBottom: 5,
-  },
-  addButton: {
-    backgroundColor: R.colors.darkGreen,
-    padding: 10,
-    borderRadius: 5,
-    alignItems: "center",
-    justifyContent: "center",
   },
 
   btnAdd: {

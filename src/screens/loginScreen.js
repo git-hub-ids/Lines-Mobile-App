@@ -147,6 +147,7 @@ export default class LoginScreen extends React.Component {
           >
             <APIURLForm />
           </Modal>
+          <Text style={styles.versionText}>{`Version: 2.7.0`}</Text>
         </ScrollView>
       </SafeAreaView>
     );
@@ -156,6 +157,12 @@ export default class LoginScreen extends React.Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  versionText: {
+    fontSize: 12,
+    color: '#888',
+    textAlign: 'center',
+    marginTop: 10,
   },
   logo: {
     height: 180,

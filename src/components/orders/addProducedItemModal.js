@@ -66,7 +66,6 @@ export default class AddProducedItemModal extends React.Component {
     this.setState({ isLoading: true }, async () => {
       let items = await services.getItems(0, 20);
       let warehouses = await services.getWarehouses(this.props.FromTab === 0 || this.props.FromTab === 7);
-      console.log(warehouses)
       let IntermediateWarehouse = await services.getIntermediateWarehouse();
       this.setState({ showUnitError: false, items, warehouses, isLoading: false, IntermediateWarehouse });
       if(warehouses.length === 1){
@@ -103,7 +102,6 @@ export default class AddProducedItemModal extends React.Component {
   }
 
   async setFromWarehouse(fromWhouseId) {
-    console.log(fromWhouseId)
     const { specs, spec, warehouses, qty } = this.state;
     const selectedWhouse = warehouses.find((e) => e.id === fromWhouseId).label;
 
@@ -191,13 +189,8 @@ export default class AddProducedItemModal extends React.Component {
   }
 
    setUnit(unitId) {
-        console.log("unitId",unitId)
     var unit = this.state.units.find((u) => u.id === unitId);
-    console.log("unit",unit);
-
     this.setState({ unitId, unit: unit.label, showUnitError: false });
-    // console.log(this.state.unitId,this.state.unit)
-    // console.log(unitId,unit.label)
   }
 
   add = () => {

@@ -134,6 +134,7 @@ export default class ProducedItemsScreen extends React.Component {
           };
           data.flowDataDetailTable = selectedOrders;
           data.flowDataProdutionItems = details;
+          data.ProductionCenterID = global["LocationId"];
           var response = await services.saveOrder(data);
           this.props.navigation.goBack();
           this.props.route.params.onBack();

@@ -26,7 +26,7 @@ export default class ReadyTabs extends React.Component {
         this.unsubscribe = this.props.tabsProps.navigation.addListener('focus', (e) => {
             this.init();
         });
-        this.refreshInterval = setInterval(this.init, 120000);
+        this.refreshInterval = setInterval(this.init, 120000);       
     }
 
     async componentDidUpdate(prevProps, prevState) {
@@ -53,6 +53,7 @@ export default class ReadyTabs extends React.Component {
                     orders = response;
                 this.setState({ orders, selectedOrders: [], isLoading: false, isRefresh: false })
             })
+            await services.getSettingShowOnlyName();
         }
         catch (error) {
             global.toast.show(translate('msgErrorOccurred'), { type: "danger" });
@@ -96,6 +97,7 @@ export default class ReadyTabs extends React.Component {
                     var data = { actionId: order.actionID, checkType: CheckType.Skip };
                     data.flowDataDetailTable = selectedOrders;
                     data.flowDataProdutionItems = [];
+                    data.ProductionCenterID = global["LocationId"];
                     await services.saveOrder(data);
                     this.setState({ isRefresh: true })
                 }

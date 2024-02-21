@@ -13,6 +13,7 @@ export const servicesUrl = {
     // getWarehouses: '/Warehouses?withoutIntermediate=true',
     getWarehouses: '/WorkFlow/ProductionCenterWhouses',
     getIntermediateWarehouse: '/Settings/10071',
+    getSettingShowOnlyName: '/Settings/10101',
     getAvailableQty:'/WarehouseUnits/GroupedByWarehouse/',
     /* POST */
     postLogin: '/Auth/Login',

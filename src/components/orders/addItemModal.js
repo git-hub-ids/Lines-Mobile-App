@@ -47,7 +47,6 @@ export default class AddItemModal extends React.Component {
   }
 
   componentDidMount = async () => {
-    console.log(this.state.isLoading)
     await this.init();
   };
 
@@ -64,13 +63,8 @@ export default class AddItemModal extends React.Component {
     this.reset();
     this.setState({ isLoading: true }, async () => {
       let items = await services.getItems(0, 20);
-      console.log('items=>'+items);
       let warehouses = await services.getWarehouses(this.props.FromTab === 0 || this.props.FromTab === 7);
-      console.log('warehouses=>'+warehouses);
-
       let IntermediateWarehouse = await services.getIntermediateWarehouse();
-      console.log('IntermediateWarehouse=>'+IntermediateWarehouse);
-
       this.setState({ showUnitError: false, items, warehouses, isLoading: false, IntermediateWarehouse });
       if(warehouses.length === 1){
         this.setState({fromWhouseId: warehouses[0].id})

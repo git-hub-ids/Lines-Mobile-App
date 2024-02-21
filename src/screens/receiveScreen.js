@@ -109,6 +109,7 @@ export default class SendScreen extends React.Component {
       var data = { actionId: 26, checkType: CheckType.Checkout };
       data.flowDataDetailTable = [];
       data.flowDataProdutionItems = details;
+      data.ProductionCenterID = global["LocationId"];
       var response = await services.saveOrder(data);
       this.setState({ details: [] });
     } else global.toast.show(translate("msgNoItemsAdded"), { type: "danger" });

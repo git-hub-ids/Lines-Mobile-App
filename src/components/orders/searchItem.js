@@ -36,6 +36,7 @@ export default class SearchItem extends React.Component {
                 var data = { actionId: order.actionID, checkType: CheckType.Skip };
                 data.flowDataDetailTable = [order];
                 data.flowDataProdutionItems = [];
+                data.ProductionCenterID = global["LocationId"];
                 await services.saveOrder(data);
                 this.setState({ isBusy: false });
                 this.onBack();

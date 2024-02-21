@@ -40,7 +40,7 @@ export default class StepsScreen extends React.Component {
             var steps = await services.getSteps(locationId);
             sections = [{
                 id: 0,
-                title: translate('mySteps') + "tets ",
+                title: translate('mySteps'),
                 data: steps,
             }];
         }
@@ -61,6 +61,8 @@ export default class StepsScreen extends React.Component {
 
     renderHeader = () => {
         var locationId = this.props?.route?.params?.locationId;
+        if (!locationId) 
+            locationId = global.locations[0].id;
         global["StepLocationTitle"] = global.locations.find(location => location.id === locationId).description;
         global["LocationTitle"] = global.locations.find(location => location.id === locationId).description;
         global["LocationId"] = locationId;

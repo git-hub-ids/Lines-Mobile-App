@@ -64,7 +64,6 @@ export default class DropDownList extends React.Component {
     //         delay = 2000;
     //     this.setState({ searchText: text }, () => {
     //         setTimeout(async () => {
-    //             console.log('this.state.searchText=> ',this.state.searchText)
     //             if (!this.state.isLoading) {
     //                 this.setState({ isLoading: false }, async () => {
     //                     let { skip, searchText, items } = this.state;

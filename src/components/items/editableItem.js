@@ -403,7 +403,7 @@ export default class EditableItem extends React.PureComponent {
         ) : null}
         <DatePicker
           modal
-          mode="date"
+          mode="date"          
           open={this.state.openDatePicker}
           date={
             this.state.expiryDate !== ""

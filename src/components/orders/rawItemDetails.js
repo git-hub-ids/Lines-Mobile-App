@@ -6,11 +6,12 @@ import { translate, validateDate } from "helpers/utils";
 import * as services from "services/orders";
 import moment from "moment";
 import R from "res/R";
-
+import { Dimensions } from 'react-native';
+import debounce from 'lodash/debounce';
 export default class RawItemDetails extends React.PureComponent {
 
     constructor(props) {
-        super(props);
+        super(props);       
         this.qtyInputRef = React.createRef();
         this.state =
         {
@@ -48,82 +49,122 @@ export default class RawItemDetails extends React.PureComponent {
         this.setState({ expiryDate: item.expiryDate ? item.expiryDate : "", showQtyError: false });
     }
 
-    expand = async () => {
+    // expand = async () => {
+    //     this.setState({ showQtyError: false })
+    //     let item = await services.getItem(this.state.item.itemId);
+    //     const specs = item.specExpiryList;
+    //     this.setState({ specs })
+    //     const isExpiryDateRequired = item.isExpiry;
+    //     let specsOptions = specs.map((i) => {
+    //         return { id: i.spec, value: i.spec, label: i.spec };
+    //     });
+    //     if ((this.state.expiryDate == '' || !this.state.expiryDate) && this.state.spec != '') {
+    //         let expirys = specs.map((i) => {
+    //             if (i.spec == this.state.spec)
+    //                 return i;
+    //         });
+    //         if (expirys) {
+    //             let expiry = expirys[0].expiryDate ? moment(expirys[0].expiryDate, "YYYY-MM-DD").format("YYYY-MM-DD")
+    //                 : "";
+    //             this.setState({ expiryDate: expiry })
+    //         }
+    //     }
+    //     let expiry = this.state.expiryDate
+    //         ? moment(this.state.expiryDate, "YYYY-MM-DD").format("YYYY-MM-DD")
+    //         : "";
+    //     let units = this.state.units;
+    //     let warehouses = this.state.warehouses;
+    //     if (!this.state.isLoaded) {
+    //         units = await services.getUnits(this.props.item.itemId)
+    //         warehouses = await services.getWarehouses(false);
+    //     }
+    //     var selectedWhouse = warehouses.find((w) => w.id == this.state.fromWhouseId);
+    //     if (selectedWhouse == undefined || selectedWhouse == null)
+    //         this.setState({
+    //             fromWhouseId: 0
+    //         })
+    //     if (warehouses.length === 1) {
+    //         this.setState({
+    //             fromWhouseId: warehouses[0].id
+    //         })
 
-        // this.setState({expiryDate: this.props.item?.expiryDate
-        //     ? moment(this.props.item?.expiryDate, "YYYY-MM-DD").format("DD/MM/YYYY")
-        //     : "",})
-        this.setState({ showQtyError: false })
-        let item = await services.getItem(this.state.item.itemId);
-        const specs = item.specExpiryList;
-        this.setState({ specs })
+    //     }
+    //     this.setState({ units, warehouses, isLoaded: true, isExpanded: !this.state.isExpanded, specs, specsOptions, isExpiryDateRequired, })
+    //     let availableQty = 0;
 
-        // this.setState({
-        //     expiryDate: this.state.expiryDate
-        //         ? moment(this.state.expiryDate, "DD/MM/YYYY").format("YYYY-MM-DD")
-        //         : "",
-        // });
+    //     const whouseQty = await services.getAvailableQty(this.state.item.itemId, this.state.fromWhouseId, this.state.spec, expiry);
+    //     availableQty = whouseQty;
 
-
-        const isExpiryDateRequired = item.isExpiry;
-        // let specsOptions = null;
-        //  if(specs != undefined)
-        let specsOptions = specs.map((i) => {
-            return { id: i.spec, value: i.spec, label: i.spec };
-        });
-        if ((this.state.expiryDate == '' || !this.state.expiryDate) && this.state.spec != '') {
-            let expirys = specs.map((i) => {
-                if (i.spec == this.state.spec)
-                    return i;
+    //     this.setState((state) => ({
+    //         availableQty,
+    //         showQtyError: this.state.qty > availableQty
+    //     }));
+    //     global["QtyError"] = this.state.showQtyError;
+    // }
+    expand =  debounce(async () => {
+        try {
+            this.setState({
+                showQtyError: false
             });
-            if (expirys) {
-                let expiry = expirys[0].expiryDate ? moment(expirys[0].expiryDate, "YYYY-MM-DD").format("YYYY-MM-DD")
-                    : "";
-                this.setState({ expiryDate: expiry })
+    
+            const { itemId } = this.state.item;
+            let item = await services.getItem(itemId);
+            const { specExpiryList, isExpiry } = item;
+            const specsOptions = specExpiryList.map(({ spec }) => ({
+                id: spec,
+                value: spec,
+                label: spec
+            }));
+    
+            let expiry = this.state.expiryDate
+                ? moment(this.state.expiryDate, "YYYY-MM-DD").format("YYYY-MM-DD")
+                : "";
+    
+            if (!expiry && this.state.spec) {
+                let expiryItem = specExpiryList.find((i) => i.spec === this.state.spec);
+                expiry = expiryItem ? moment(expiryItem.expiryDate, "YYYY-MM-DD").format("YYYY-MM-DD") : "";
             }
-        }
+            let { units, warehouses } = this.state;
+            if (!this.state.isLoaded) {
+                [units, warehouses] = await Promise.all([
+                    services.getUnits(itemId),
+                    services.getWarehouses(false)
+                ]);
+            }
+            const selectedWhouse = warehouses.find((w) => w.id === this.state.fromWhouseId);
+            if (!selectedWhouse) {
+                this.setState({
+                    fromWhouseId: 0
+                });
+            }
+    
+            if (warehouses.length === 1) {
+                this.setState({
+                    fromWhouseId: warehouses[0].id
+                });
+            }       
 
-        // let ExpiryOptions = specs.map((i) => {
-        //     return { id:i.expiryDate? moment(i.expiryDate).format("DD/MM/YYYY"):"", value: i.expiryDate?moment(i.expiryDate).format("DD/MM/YYYY"):"", label: i.expiryDate?moment(i.expiryDate).format("DD/MM/YYYY"):"" };
-        // });
-
-        // this.setState({ spec: this.state.item.spec });
-        // this.setLotNumber(this.state.item.spec);
-        let expiry = this.state.expiryDate
-            ? moment(this.state.expiryDate, "YYYY-MM-DD").format("YYYY-MM-DD")
-            : "";
-        let units = this.state.units;
-        let warehouses = this.state.warehouses;
-        if (!this.state.isLoaded) {
-            units = await services.getUnits(this.props.item.itemId)
-            warehouses = await services.getWarehouses(false);
-        }
-        var selectedWhouse = warehouses.find((w) => w.id == this.state.fromWhouseId);
-        if (selectedWhouse == undefined || selectedWhouse == null)
+            const whouseQty = await services.getAvailableQty(itemId, this.state.fromWhouseId, this.state.spec, expiry);
+            const availableQty = whouseQty;
             this.setState({
-                fromWhouseId: 0
-            })
-        if (warehouses.length === 1) {
-            this.setState({
-                fromWhouseId: warehouses[0].id
-            })
-
+                specs: specExpiryList,
+                specsOptions,
+                units,
+                warehouses,
+                isLoaded: true,
+                isExpanded: !this.state.isExpanded,
+                isExpiryDateRequired: isExpiry,
+                expiryDate: expiry,
+                availableQty,
+                showQtyError: this.state.qty > availableQty
+            });
+    
+            global["QtyError"] = this.state.showQtyError;
+        } catch (error) {
+            console.error("An error occurred:", error);
         }
-        this.setState({ units, warehouses, isLoaded: true, isExpanded: !this.state.isExpanded, specs, specsOptions, isExpiryDateRequired, })
-        let availableQty = 0;
-
-        const whouseQty = await services.getAvailableQty(this.state.item.itemId, this.state.fromWhouseId, this.state.spec, expiry);
-        availableQty = whouseQty;
-
-        this.setState((state) => ({
-            availableQty,
-            showQtyError: this.state.qty > availableQty
-        }));
-        console.log('33333333333',this.state.showQtyError)
-
-        global["QtyError"] = this.state.showQtyError;
-    }
-
+    }, 300);
+    
     setUnit(unitId) {
         let units = this.state.units;
         let unit = this.state.unit;
@@ -144,8 +185,6 @@ export default class RawItemDetails extends React.PureComponent {
             const { toWhouseId } = this.state;
             this.setState({ availableQty, showQtyError: this.state.qty > availableQty, showWhouseError: toWhouseId > 0 && (fromWhouseId == toWhouseId) })
         });
-        console.log('444444444444',this.state.showQtyError)
-
         global["QtyError"] = this.state.showQtyError;
     }
 
@@ -199,8 +238,6 @@ export default class RawItemDetails extends React.PureComponent {
                 showQtyError: qty > availableQty
             });
         }
-        console.log('2222222222222',this.state.showQtyError)
-
         global["QtyError"] = this.state.showQtyError;
     }
     async setQuantity(qty) {
@@ -208,7 +245,6 @@ export default class RawItemDetails extends React.PureComponent {
             qty: qty,
             showQtyError: qty > this.state.availableQty
         });
-        console.log('111111111',this.state.showQtyError)
         global["QtyError"] = this.state.showQtyError;
     }
     done = () => {
@@ -251,11 +287,15 @@ export default class RawItemDetails extends React.PureComponent {
                         <Text style={styles.headerTitle}>
                             {item.name}
                         </Text>
-                        <Text style={styles.headerSubTitle}>
+
+                    </TouchableOpacity>
+                   
+            <View style={styles.row} >
+            <View style={styles.container2}>
+                    <Text style={styles.headerSubTitle}>
                             {item.qty + " " + item.unit}
                         </Text>
-                    </TouchableOpacity>
-                    <View style={styles.row}>
+                        </View>
                         <TouchableOpacity style={styles.btnExpand} onPress={this.expand}>
                             <Ionicons name={this.state.isExpanded ? 'chevron-up' : 'chevron-down'} size={30} color='#fff' />
                         </TouchableOpacity>
@@ -430,7 +470,7 @@ export default class RawItemDetails extends React.PureComponent {
         );
     }
 }
-
+const screenWidth = Dimensions.get('window').width;
 const styles = StyleSheet.create({
     container: {
         margin: 20,
@@ -440,9 +480,18 @@ const styles = StyleSheet.create({
         alignSelf: 'stretch',
         shadowColor: "#000",
         shadowOffset: {
-            width: 0,
-            height: 3,
+          width: 0,
+          height: 3,
         },
+        shadowOpacity: 0.29,
+        shadowRadius: 4.65,
+        elevation: 7,
+        width: screenWidth - 40, // Set a fixed width based on screen width
+      }, 
+      container2: {
+        margin: 20,
+        justifyContent: 'space-between',
+        alignSelf: 'stretch',
         shadowOpacity: 0.29,
         shadowRadius: 4.65,
         elevation: 7,
@@ -483,11 +532,23 @@ const styles = StyleSheet.create({
         marginHorizontal: 5
     },
     body: {
+        height: 400, // Set a fixed height for the expanded content
         flex: 1,
         flexWrap: "wrap",
         flexDirection: 'row',
         backgroundColor: R.colors.lightGrey,
         padding: 20,
+        alignSelf: 'stretch',
+        maxWidth: screenWidth - 40, // Set a maximum width based on screen width
+    },
+    footer: {
+        height: 50, // Set a fixed height for the footer
+        alignSelf: 'flex-end',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: 15,
+        maxWidth: screenWidth - 40, // Set a maximum width based on screen width
     },
     row: {
         flexDirection: 'row',
@@ -527,13 +588,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         color: R.colors.darkGreen
-    },
-    footer: {
-        alignSelf: 'flex-end',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        margin: 15
     },
     button: {
         marginHorizontal: 10
